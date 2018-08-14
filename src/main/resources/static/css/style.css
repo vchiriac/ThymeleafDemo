@@ -1,0 +1,59 @@
+/*input[type=text]:invalid { background-color: red; } */
+
+body {
+    font: 100% arial,helvetica,sans-serif;
+}
+
+form input:invalid {
+    border-left-color: salmon;
+}
+
+form input:required:focus:valid {
+    background: url("../images/check.png") bottom right no-repeat;
+    background-size: 25px;
+}
+
+form input:focus:invalid {
+    background: url("../images/stop.png") center right no-repeat;
+    background-size: 15px;
+}
+
+form label.error{
+    font:10px Tahoma,sans-serif;
+    color:#ED7476;
+    margin-left:5px;
+    display:inline;
+}
+form input.error,form input.error:hover,form input.error:focus,form select.error,form textarea.error{
+    border:1px solid #ED7476;
+    background:#FFEDED
+}
+
+.error_bubble {
+    width: auto;
+    height: 34px;
+    left:auto;
+    background: crimson;
+    position: absolute;
+    border-radius: 30px;
+    -moz-border-radius: 30px;
+    -webkit-border-radius: 30px;
+    padding: 8px;
+    box-shadow: 0 0 1em hsl(30,50%,75%), 0 1.2em 1em -0.8em #ccc;
+}
+
+.error_bubble:after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    left: 21px;
+    top: 72px;
+    width: 0;
+    height: 0;
+    border: 25px solid transparent;
+    border-right-color: crimson;
+    border-left: 0;
+    border-right: 0;
+    margin-top: -19px;
+    margin-left: -38px;
+}
