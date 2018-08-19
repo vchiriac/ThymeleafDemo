@@ -2,11 +2,10 @@ package com.progressive.code.crud;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.PropertySource;
 
-/**
- * Created by abraun on 10/11/2017.
- */
 @SpringBootApplication
+@PropertySource("classpath:/application.properties")
 public class CrudApp {
 
     public static void main(String[] args) {

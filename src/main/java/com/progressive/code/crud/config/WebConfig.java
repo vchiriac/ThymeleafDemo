@@ -1,23 +1,21 @@
-import java.util.List;
-import java.util.Locale;
+package com.progressive.code.crud.config;
 
+import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
-import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 
-import be.buyway.hydra.ikea.kiosk.mapper.DossierDtoDataConverter;
+import java.util.Locale;
 
-import nz.net.ultraq.thymeleaf.LayoutDialect;
+//import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter implements MessageSourceAware {
@@ -33,16 +31,16 @@ public class WebConfig extends WebMvcConfigurerAdapter implements MessageSourceA
         WebConfig.messageSource = messageSource;
     }
 
-    @Override
+/*    @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         super.configureMessageConverters(converters);
         converters.add(new DossierDtoDataConverter());
-    }
+    }*/
 
-    @Bean
+/*    @Bean
     public Java8TimeDialect java8TimeDialect() {
         return new Java8TimeDialect();
-    }
+    }*/
 
     @Bean
     public LocaleResolver localeResolver() {

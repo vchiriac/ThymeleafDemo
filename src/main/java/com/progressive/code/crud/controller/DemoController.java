@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.jws.WebParam;
 
-/**
- * Created by abraun on 10/11/2017.
- */
 @Controller
 public class DemoController {
 

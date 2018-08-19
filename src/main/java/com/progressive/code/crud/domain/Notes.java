@@ -2,9 +2,6 @@ package com.progressive.code.crud.domain;
 
 import javax.persistence.*;
 
-/**
- * Created by abraun on 23/11/2017.
- */
 @Entity
 public class Notes {
 

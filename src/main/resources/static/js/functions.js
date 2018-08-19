@@ -12,7 +12,7 @@ $(document).ready(function() {
         var element = $('#title');
         var name = $.trim(element.val());
         if (name === '') {
-            var parent = element[0].parentElement;
+            var parent = $('#div-title')[0];
             show_error(parent, "This is the error");
             //$('#title')[0].setCustomValidity('my custom error');
             event.preventDefault();

@@ -1,3 +1,5 @@
+package com.progressive.code.crud.service;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.List;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 @Service
-public class TranslationService implements TranslatableResource {
+public class TranslationService {
 
     @Value("${supported.languages}")
     private String[] supportedLanguages;
@@ -36,21 +38,13 @@ public class TranslationService implements TranslatableResource {
 
     @Async
     public void getMessageTranslationAsync(String key, Locale locale) throws ExecutionException {
-        ResourceBundle bundle = ResourceBundle.getBundle("i18n.messages", locale);
+        ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
         AsyncResult result = new AsyncResult<>(bundle.getString(key));
         translatedMessage = (String) result.get();
     }
 
     public String getTranslatedMessage() {
         return translatedMessage;
-    }
-
-    public List<String> getOtherHousingResources(Locale locale) {
-        return getResourceList(OTHERHOUSINGTYPE, locale);
-    }
-
-    public List<String> getMaritalStatuses(Locale locale) {
-        return getResourceList(MARITALSTATUS, locale);
     }
 
     private List<String> getResourceList(final String resource, final Locale locale) {
@@ -61,7 +55,7 @@ public class TranslationService implements TranslatableResource {
 
     private void initializeTranslations(String language) {
         Locale locale = new Locale(language);
-        ResourceBundle bundle = ResourceBundle.getBundle("i18n.enum_messages", locale);
+        ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
         Enumeration<String> bundleKeys = bundle.getKeys();
         Map<String, String> translatedMap = new HashMap<>();
         while (bundleKeys.hasMoreElements()) {

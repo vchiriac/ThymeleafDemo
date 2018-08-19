@@ -8,9 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Created by abraun on 23/11/2017.
- */
 @Service
 public class NotesServiceImpl implements NotesService {
 

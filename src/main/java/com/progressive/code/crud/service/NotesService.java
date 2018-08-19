@@ -4,9 +4,6 @@ import java.util.List;
 
 import com.progressive.code.crud.domain.Notes;
 
-/**
- * Created by abraun on 23/11/2017.
- */
 public interface NotesService {
 
     List<Notes> findAll();
