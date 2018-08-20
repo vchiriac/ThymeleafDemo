@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <div th:replace="fragments/header :: header-css"></div>
+    <script th:src="@{/js/functions.js}"></script>
+</head>
+
+<body onkeydown="resettimer()" onscroll="resettimer()" onmousemove="resettimer()" onload="startTimer();selectDefaultValuesProfessionalSituation()">
+<div id="professional-data-panel" class="main">
+    <div class="content">
+        <form action="#" id="professional-data-form" onsubmit="return validateForm(this)" th:action="@{/financialdata}" th:object="${dossierDto}" method="get">
+            <div class="banner">
+                <div class="header">
+                    <div class="header_inner">
+                        <div th:replace="fragments/header :: header_logo"></div>
+                        <div class="warning"><th:block th:text="#{message.ikea.scanscreen.warning}"/></div>
+                    </div>
+                    <div class="navig_button">
+                        <div th:replace="fragments/header :: header"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:replace="fragments/header :: navig_left"></div>
+            <div th:replace="fragments/header :: navig_right"></div>
+
+            <div class="container-fluid"> <!-- Start of container -->
+
+                    <h1><th:block th:text="#{message.ikea.professionaldata.situation.label}"/></h1>
+                    <h2><th:block th:text="#{message.ikea.professionaldata.situation.question.label}"/></h2>
+
+                    <div class="input_row" id="div-professional-status">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.situation}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectProfessionalStatus">
+                            <select class="styled-select" id="situationProf" name="situationProf"
+                                    th:field="*{ownerPersonalInfoDto.professionalStatus}"
+                                    th:onchange="'displayContractType(this)'" onblur="validateJobSelector(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="profStatus : ${professionalStatuses}" th:value="${profStatus.name()}"
+                                        th:name="${profStatus.displayContractType}"
+                                        th:text="#{${profStatus.getLabel()}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-customer-job-year">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.from}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputFromYear" name="inputFromYear" type="text"
+                                   th:field="*{ownerPersonalInfoDto.fromYear}"
+                                   onkeypress="digitOnly(event)" onblur="validateIsNotEmpty(this) && checkFromYear(this)"
+                                   maxlength="4" th:placeholder="#{message.dossier.professionaldata.customer.placeholder.year}"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-customer-job-month" th:style="${dossierDto.ownerPersonalInfoDto.fromMonth != null && !dossierDto.ownerPersonalInfoDto.fromMonth.isEmpty()} ? 'display:inline-block' : 'display:none'">
+                        <div class="col-md-5">
+                            <strong><th:block th:text="#{message.dossier.details.customer.info.from.month}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectMonth">
+                            <select class="styled-select" id="inputFromMonth" name="inputFromMonth" th:field="*{ownerPersonalInfoDto.fromMonth}"
+                                    onblur="validateJobSelector(this) && checkFromMonth(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="month : ${months}" th:value="${month.getMonthAsValue()}" th:text="#{${month.getLabel()}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-contract-type" th:style="${dossierDto.ownerPersonalInfoDto.typeOfContract != null && !dossierDto.ownerPersonalInfoDto.typeOfContract.isEmpty()} ? 'display:block' : 'display:none'">
+                        <div class="col-md-5">
+                            <strong><th:block th:text="#{message.dossier.details.customer.contract.type}"/></strong>
+                            <a href="#" onclick="return false;" data-toggle="tooltip" data-placement="right"
+                               th:title="#{message.information.ikea.family.customer.contract.info}">
+                                <span class="glyphicon glyphicon-exclamation-sign"></span>
+                            </a>
+                        </div>
+                        <div class="input_div" id="selectContractType">
+                            <select class="styled-select" id="contractType" name="contractType" th:field="*{ownerPersonalInfoDto.typeOfContract}" onblur="validateJobSelector(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="contractType : ${contractTypes}" th:value="${contractType.name()}" th:text="#{${contractType.label}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" id="customerBirthDate" name="customerBirthDate" th:value="${dossierDto.ownerPersonalInfoDto.birthDate}">
+
+                <div id="div-employer-info" th:style="${dossierDto.ownerPersonalInfoDto.employerName != null && !dossierDto.ownerPersonalInfoDto.employerName.isEmpty()} ? 'display:block' : 'display:none'">
+                    <h2><th:block th:text="#{message.dossier.professionaldata.customer.employer.info}"/></h2>
+                    <div class="input_row" id="div-employer-name">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.employer.name}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputEmployerName" name="inputEmployerName" th:field="*{ownerPersonalInfoDto.employerName}" type="text"
+                                   maxlength="50" onblur="validateIsNotEmpty(this)" th:placeholder="#{message.dossier.details.customer.placeholder.name}"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-countries">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.consultation.details.employer.country}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectEmpCountry">
+                            <select class="styled-select" id="countries" name="countries" th:field="*{ownerPersonalInfoDto.employerCountry}"
+                                    th:onchange="'displayPostalCodes(this)'" onblur="validateJobSelector(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="country : ${cellCountryCodes}" th:value="${country.name()}" th:text="#{${country.label}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-employer-address">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.employer.address}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputEmployerAddress" name="inputEmployerAddress" th:field="*{ownerPersonalInfoDto.employerAddress}" type="text"
+                                   th:placeholder="#{message.consultation.details.employer.placeholder.address}" maxlength="32" onblur="validateIsNotEmpty(this)"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-postal-codes">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.residence.postal.code.localite}"/></strong>
+                        </div>
+                        <div class="input_div" id="div-select-postal-codes">
+                            <select class="styled-select" id="postalCodes" name="postalCodes" onblur="validateJobSelector(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                            </select>
+                        </div>
+                        <div class="input_div" id="div-input-postal-code" style="display:none">
+                            <input id="inputPostalCode" name="inputPostalCode"
+                                   type="text" maxlength="6" onkeypress="digitOnly(event)" onblur="validateIsNotEmpty(this)"
+                                   th:placeholder="#{message.consultation.details.employer.placeholder.postalcode}"/>
+                        </div>
+                        <div><input type="hidden" id="postalCode" name="postalCode" th:field="*{ownerPersonalInfoDto.employerPostalCode}"/></div>
+                    </div>
+                    <div class="input_row" id="div-employer-phone">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.employer.telephone}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <div class="input-group">
+                            <span><select class="form-control" id="employerCellPrefix" name="employerCellPrefix" style="width: 20%;">
+                                <option th:each="prefix : ${cellCountryCodes}" th:value="${prefix.value}" th:name="${prefix.name()}"
+                                        th:selected="${prefix.isPreselected()}" th:text="${prefix.value}"></option>
+                            </select></span>
+                                <input class="input_div" style="width: 80%" id="employerPhone" type="text" name="employerPhone"
+                                       onkeypress="digitOnly(event)" onblur="validateIsNotEmpty(this)" maxlength="10"
+                                       th:field="*{ownerPersonalInfoDto.employerPhone}" placeholder="Phone">
+                            </div>
+                            <div><input type="hidden" id="inputEmployerCellPrefix" name="inputEmployerCellPrefix" th:field="*{ownerPersonalInfoDto.employerPhonePrefix}"/></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="div-partner-info" th:style="${!dossierDto.partnerPersonalInfoDto.firstName.isEmpty()} ? 'display:block' : 'display:none'">
+                    <h2><label th:text="#{message.consultation.details.partner.which}"></label>
+                        &nbsp;<label th:text="${dossierDto.partnerPersonalInfoDto.firstName}"></label>?
+                    </h2>
+                    <div class="input_row" id="div-partner-professional-status">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.situation}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectPartnerProfessionalStatus">
+                            <select class="styled-select" id="situationProfPartner" name="situationProfPartner"
+                                    th:field="*{partnerPersonalInfoDto.professionalStatus}"  onblur="validateJobSelector(this)"
+                                    th:onchange="'displayPartnerContractType(this)'">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="profStatus : ${professionalStatuses}" th:value="${profStatus.name()}"
+                                        th:name="${profStatus.displayContractType}"
+                                        th:text="#{${profStatus.getLabel()}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-customer-partner-job-year">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.info.from}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputFromPartnerYear" name="inputFromPartnerYear" type="text"
+                                   onkeypress="digitOnly(event)" onblur="validateIsNotEmpty(this) && checkFromPartnerYear(this)"
+                                   th:field="*{partnerPersonalInfoDto.fromYear}" maxlength="4"
+                                   th:placeholder="#{message.dossier.professionaldata.customer.placeholder.year}"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-customer-partner-job-month" th:style="${dossierDto.partnerPersonalInfoDto.fromMonth != null && !dossierDto.partnerPersonalInfoDto.fromMonth.isEmpty()} ? 'display:inline-block' : 'display:none'">
+                        <div class="col-md-5">
+                            <strong><th:block th:text="#{message.dossier.details.customer.info.from.month}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectPartnerMonth">
+                            <select class="styled-select" id="inputPartnerFromMonth" name="inputPartnerFromMonth" th:field="*{partnerPersonalInfoDto.fromMonth}"
+                                    onblur="validateJobSelector(this) && checkFromMonth(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="month : ${months}" th:value="${month.getMonthAsValue()}" th:text="#{${month.getLabel()}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-partner-contract-type" th:style="${dossierDto.partnerPersonalInfoDto.typeOfContract != null && !dossierDto.partnerPersonalInfoDto.typeOfContract.isEmpty()} ? 'display:block' : 'display:none'">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.customer.contract.type}"/></strong>
+                            <a href="#" onclick="return false;" data-toggle="tooltip" data-placement="right"
+                               th:title="#{message.information.ikea.family.customer.contract.info}">
+                                <span class="glyphicon glyphicon-exclamation-sign"></span>
+                            </a>
+                        </div>
+                        <div class="input_div" id="selectPartnerContractType">
+                            <select class="styled-select" id="partnerContractType" name="partnerContractType" onblur="validateJobSelector(this)" th:field="*{partnerPersonalInfoDto.typeOfContract}">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="contractType : ${contractTypes}" th:value="${contractType.name()}" th:text="#{${contractType.label}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="hidden" id="customerPartnerBirthDate" name="customerPartnerBirthDate" th:value="${dossierDto.partnerPersonalInfoDto.birthDate}">
+                </div>
+
+                <div id="partner-employer-info" th:style="${dossierDto.partnerPersonalInfoDto.employerName != null && !dossierDto.partnerPersonalInfoDto.employerName.isEmpty()} ? 'display:block' : 'display:none'">
+                    <h2><label th:text="#{message.consultation.details.partner.employer}"></label>
+                        &nbsp;<label th:text="${dossierDto.partnerPersonalInfoDto.firstName}"></label>?
+                    </h2>
+                    <div class="input_row" id="div-partner-employer-name">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.partner.info.employer.name}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputPartnerEmployerName" name="inputPartnerEmployerName" th:field="*{partnerPersonalInfoDto.employerName}" type="text"
+                                   maxlength="50" onblur="validateIsNotEmpty(this)" th:placeholder="#{message.dossier.details.customer.placeholder.name}"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-partner-countries">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.consultation.details.employer.country}"/></strong>
+                        </div>
+                        <div class="input_div" id="selectPartnerEmpCountry">
+                            <select class="styled-select" id="partnerCountries" name="partnerCountries" th:field="*{partnerPersonalInfoDto.employerCountry}"
+                                    onblur="validateJobSelector(this)" th:onchange="'displayPartnerPostalCodes(this)'">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                                <option th:each="country : ${cellCountryCodes}" th:value="${country.name()}" th:text="#{${country.label}}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-partner-employer-address">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.partner.info.employer.address}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <input id="inputPartnerEmployerAddress" name="inputPartnerEmployerAddress" th:field="*{partnerPersonalInfoDto.employerAddress}" type="text"
+                                   th:placeholder="#{message.consultation.details.employer.placeholder.address}" maxlength="32" onblur="validateIsNotEmpty(this)"/>
+                        </div>
+                    </div>
+                    <div class="input_row" id="div-partner-postal-codes">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.residence.postal.code.localite}"/></strong>
+                        </div>
+                        <div class="input_div" id="div-select-partner-postal-codes">
+                            <select class="styled-select" id="partnerPostalCodes" name="partnerPostalCodes" onblur="validateJobSelector(this)">
+                                <option th:value="0" th:text="#{message.dossier.professional.data.customer.choose}"></option>
+                            </select>
+                        </div>
+                        <div class="input_div" id="div-input-partner-postal-code" style="display:none">
+                            <input id="inputPartnerPostalCode" name="inputPartnerPostalCode"
+                                   type="text" maxlength="6" onkeypress="digitOnly(event)" onblur="isNotEmpty(this)"
+                                   th:placeholder="#{message.consultation.details.employer.placeholder.postalcode}"/>
+                        </div>
+                        <div><input type="hidden" id="partnerPostalCode" name="partnerPostalCode" th:field="*{partnerPersonalInfoDto.employerPostalCode}"/></div>
+                    </div>
+                    <div class="input_row" id="div-partner-employer-phone">
+                        <div class="col-md-5">
+                            <strong>
+                                <th:block th:text="#{message.dossier.details.partner.info.employer.telephone}"/></strong>
+                        </div>
+                        <div class="input_div">
+                            <div class="input-group">
+                            <span><select class="form-control" id="employerPartnerCellPrefix" name="employerPartnerCellPrefix" style="width: 25%;">
+                                <option th:each="prefix : ${cellCountryCodes}" th:value="${prefix.value}" th:name="${prefix.name()}"
+                                        th:selected="${prefix.isPreselected()}" th:text="${prefix.value}"></option>
+                            </select></span>
+                                <input class="input_div" style="width: 75%" id="employerPartnerPhone" type="text" name="employerPartnerPhone"
+                                       onkeypress="digitOnly(event)" onblur="validateIsNotEmpty(this)" maxlength="10"
+                                       th:field="*{partnerPersonalInfoDto.employerPhone}">
+                            </div>
+                            <div><input type="hidden" id="inputPartnerEmployerCellPrefix" name="inputPartnerEmployerCellPrefix" th:field="*{partnerPersonalInfoDto.employerPhonePrefix}"/></div>
+                        </div>
+                    </div>
+
+                </div>
+
+         </div> <!-- End of container -->
+        </form>
+        <div class="last-submit-container" style="float: right;width: 0px;top: 480px;">
+            <a th:href="@{/welcome}" style="color:#222;">
+                <div class="last-abort-text" style="width: 0px;text-decoration: underline;"><th:block th:text="#{message.dossier.confirmation.page.cancel}"/></div>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
