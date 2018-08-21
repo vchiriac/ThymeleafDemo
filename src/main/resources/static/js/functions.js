@@ -34,5 +34,5 @@ function getText() {
 }
 
 function show_error(parent, message) {
-    parent.insertAdjacentHTML("beforeend", "<span class='error_bubble'>" + message + "</span>");
+    parent.insertAdjacentHTML("beforeend", "<span class='left'>" + message + "</span>");
 }

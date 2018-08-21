@@ -10,7 +10,6 @@ a {text-decoration:none;}
 
 *:focus {outline:none;}
 
-/* Ikea style */
 body {font-family:Verdana,Helvetica,Arial,sans-serif;font-size:13px;line-height:147%;color:#222222;width:1900px;min-height:1000px;position:relative;}
 h1, h2, h3, h4 {font-weight:bold;width:100%;display:inline-block;}
 h1 {font-size:24px;line-height:100%;margin-top:20px;margin-bottom:50px;}
@@ -24,8 +23,44 @@ form {margin-bottom:100px;}
 .full-width {display:inline-block;width:100%;}
 .margin-top-200 {margin-top:200px;}
 
-input[type="text"], input[type="number"] {display:block;padding-bottom: 0px;padding-left:8px;padding-right:8px;padding-top: 0px;border:1px solid #ccc;border-radius:0px;width:420px;-webkit-appearance:none;font:inherit;font-size:1em;transition:border-color;box-shadow:inset 0 1px 3px rgba(0, 0, 0, 0.06);margin:0px;outline:0 none;height:2em;color:#222;cursor:text;max-width:420px;height:34px;box-sizing:border-box;}
-button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, Helvetica, Arial, sans-serif;color:#ffffff;background-color:#407ab1;padding:1.125rem;border-radius:6px;text-align:center;margin-left:1rem;margin-top:0.75rem;font-weight:700;max-width:22rem;outline:0 none;}
+input[type="text"], input[type="number"] {
+    display:block;
+    padding-bottom: 0px;
+    padding-left:8px;
+    padding-right:8px;
+    padding-top: 0px;
+    border:1px solid #ccc;
+    border-radius:0px;
+    width:420px;
+    -webkit-appearance:none;
+    font:inherit;
+    font-size:1em;
+    transition:border-color;
+    box-shadow:inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    margin:0px;
+    outline:0 none;
+    height:2em;
+    color:#222;
+    cursor:text;
+    max-width:420px;
+    height:34px;
+    box-sizing:border-box;
+}
+
+button, input[type="submit"] {
+    border:solid 3px #ffffff;
+    font:81.25%/1.5 Verdana, Helvetica, Arial, sans-serif;
+    color:#ffffff;
+    background-color:#407ab1;
+    padding:1.125rem;
+    border-radius:6px;
+    text-align:center;
+    margin-left:1rem;
+/*    margin-top:0.75rem;*/
+    font-weight:700;
+    max-width:22rem;
+    outline:0 none;
+}
 
 .styled-select {
     overflow: hidden;
@@ -34,6 +69,7 @@ button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, 
     font-size: 16px;
     border: 1px solid #ccc;
 }
+
 .styled-select select {
     background: transparent;
     padding: 5px;
@@ -46,7 +82,9 @@ button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, 
 .small_number {width:55px !important;display:inline-block !important;}
 
 .banner {position:fixed;top:0;left:0;right:0;z-index:999;background-color:#fff;}
+
 .header {border-bottom:1px solid #eee;position:relative;}
+
 .header_inner {position:relative;margin-left:auto;margin-right:auto;width:1600px;height:70px;padding-top:15px;box-sizing:border-box;}
 
 .header_logo {width:117px;float:left;}
@@ -84,36 +122,6 @@ button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, 
     width: 420px;
 }
 
-.error_bubble {
-    width: auto;
-    height: 34px;
-    left: auto;
-    background: #ff6f6f;
-    position: absolute;
-    text-align: center;
-    -moz-border-radius: 30px;
-    -webkit-border-radius: 30px;
-    border-radius: 30px;
-    padding: 8px;
-    box-shadow: 0 0 1em hsl(30, 50%, 75%), 0 1.2em 1em -0.8em #ccc;
-}
-
-.error_bubble:after {
-    content: '';
-    position: absolute;
-    z-index: 2;
-    left: 21px;
-    top: 72%;
-    width: 0;
-    height: 0;
-    border: 25px solid transparent;
-    border-right-color: #ff6f6f;
-    border-left: 0;
-    border-top: 0;
-    margin-top: -19px;
-    margin-left: -38px;
-}
-
 .error {
     color: red
 }
@@ -137,7 +145,6 @@ button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, 
 .scan-container {width:600px;display:inline-block;}
 .scan-left {width:200px;float:left;}
 .scan-right {width:400px;float:left;font-weight:bold;font-size:20px;text-align:left;line-height:24px;padding-left:30px;padding-top:15px;box-sizing:border-box;}
-.ikea-family-link {text-decoration:underline;font-style:italic;margin-top:10px;}
 .scan-text {font-weight:bold;font-size:16px;margin-top:60px;margin-bottom:40px;}
 
 .legal-infos {font-size:11px;}
@@ -193,3 +200,80 @@ button, input[type="submit"] {border:solid 3px #ffffff;font:81.25%/1.5 Verdana, 
 .cboxIE #cboxMiddleRight{background:transparent; filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/img/popup/borderMiddleRight.png', sizingMethod='scale');}
 .cboxIE #cboxClose{background:transparent; filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='./img/popup/close.png', sizingMethod='scale');}
 #cboxClose{position:absolute;top:-40px;right:-40px;background:url(../img/popup/close.png) top left no-repeat;width:50px;height:50px;text-indent:-9999px;filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='close.png',sizingMethod='scale');border: 0px;}
+
+/* NEW ERROR STYLE MESSAGE */
+span {
+    display: inline-block;
+    width: fit-content;
+    height: 34px;
+    left: auto;
+    position: absolute;
+    text-align: center;
+    background-color: #ff6f6f;
+    padding: 7px;
+    border-radius: 10px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: dimgrey;
+    box-shadow: 0 0 1em hsl(30, 50%, 75%), 0 1.2em 1em -0.8em #ccc;
+}
+left {
+    float: left;
+}
+span.left:after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: -3px;
+    top: 7px;
+    height: 0px;
+    width: 0px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #ff6f6f;
+}
+span.left:before {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    left: -5px;
+    top: 7px;
+    height: 0px;
+    width: 0px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 5px solid dimgrey;
+}
+/* NEW ERROR STYLE MESSAGE */
+
+
+.error_bubble {
+    width: fit-content;
+    height: 34px;
+    left: auto;
+    background: #ff6f6f;
+    position: absolute;
+    text-align: center;
+    -moz-border-radius: 30px;
+    -webkit-border-radius: 30px;
+    border-radius: 12px;
+    padding: 8px;
+    border: 2px solid rgba(0,0,0,0.4);
+    box-shadow: 0 0 1em hsl(30, 50%, 75%), 0 1.2em 1em -0.8em #ccc;
+}
+
+.error_bubble:after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    left: 21px;
+    top: 74%;
+    width: 0;
+    height: 0;
+    border: 12px solid transparent;
+    border-right-color: #ff6f6f;
+    border-left: 0;
+    border-top: 0;
+    margin-top: -16px;
+    margin-left: -28px;
+}

@@ -5,36 +5,46 @@
     <meta charset="UTF-8" />
     <title>Input validations</title>
 
-    <link rel="stylesheet" type="text/css" media="all" href="../../css/bootstrap.min.css" th:href="@{/css/bootstrap.min.css}" />
-    <link rel="stylesheet" type="text/css" media="all" href="../../css/style.css" th:href="@{/css/style.css}" />
-    <script type="text/javascript" th:src="@{/js/jquery.min.js}" src="js/jquery.min.js"></script>
-    <script type="text/javascript" th:src="@{/js/bootstrap.min.js}" src="js/bootstrap.min.js"></script>
-    <script type="text/javascript" th:src="@{/js/functions.js}" src="js/functions.js"></script>
+    <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/bootstrap.min.css}" />
+    <link rel="stylesheet" type="text/css" media="all"  th:href="@{/css/mystyle.css}" />
+    <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+    <script type="text/javascript" th:src="@{/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/js/functions.js}"></script>
 </head>
 
 <body>
 
-<div class="container">
+<div class="content">
 
     <h1>Validation</h1>
 
-    <form class="form-group" id="validationForm" name="validationForm" action="/validate" th:action="@{/validate}" method="post">
+    <form  id="validationForm" name="validationForm" action="/validate" th:action="@{/validate}" method="post">
 
         <div class="container-fluid" id="div-main-container">
-            <div class="form-group" id="div-title">
-                <label for="title">Title</label>
-                <input type="text" class="form-control" id="title" th:field="${notes.title}" />
-            </div>
-            <div class="form-group" id="div-content">
-                <label for="content">Content</label>
-                <textarea class="form-control" id="content" th:field="${notes.content}"></textarea>
-            </div>
-            <button type="submit" id="sendbutton" name="sendbutton" class="btn btn-primary">Save</button>
-            <a href="#" th:href="@{/}" class="btn btn-danger" role="button">Cancel</a>
 
+            <div class="input_row" id="div-title">
+                <div class="col-md-5"><strong><th:block th:text="#{validation.title}"/></strong></div>
+                <div class="input_div">
+                    <input id="inputTitle" name="inputTitle" type="text" th:field="*{notes.title}"/>
+                </div>
+            </div>
+            <div class="clear"></div>
+            <div class="input_row" id="div-content">
+                <div class="col-md-5"><strong><th:block th:text="#{validation.content}"/></strong></div>
+                <div class="input_div">
+                    <input id="inputContent" name="inputContent" type="text" th:field="${notes.content}"/>
+                </div>
+            </div>
+            <div class="input_row" id="div-submit">
+                <div class="col-md-5"><strong>&nbsp;</strong></div>
+                <div class="col-md-2">
+                    <button type="submit" id="sendbutton" name="sendbutton" class="btn btn-primary">Save</button>
+                </div>
+                <div class="col-md-2">
+                  <a href="#" th:href="@{/}" class="btn btn-danger" role="button">Cancel</a>
+                </div>
+            </div>
         </div>
-
-
     </form>
 
 </div>
