@@ -212,9 +212,7 @@ span {
     background-color: #ff6f6f;
     padding: 7px;
     border-radius: 10px;
-    border-width: 2px;
-    border-style: solid;
-    border-color: dimgrey;
+    border: 1px solid dimgrey;
     box-shadow: 0 0 1em hsl(30, 50%, 75%), 0 1.2em 1em -0.8em #ccc;
 }
 left {
@@ -236,13 +234,13 @@ span.left:before {
     content: "";
     display: inline-block;
     position: absolute;
-    left: -5px;
+    left: -4px;
     top: 7px;
     height: 0px;
     width: 0px;
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
-    border-right: 5px solid dimgrey;
+    border-right: 4px solid dimgrey;
 }
 /* NEW ERROR STYLE MESSAGE */
 
