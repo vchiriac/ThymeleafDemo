@@ -1,0 +1,29 @@
+import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+public final class ColectionUtils {
+
+    public static <T> BinaryOperator<T> toOnlyElement() {
+        return toOnlyElementThrowing(IllegalArgumentException::new);
+    }
+
+    private static <T, E extends RuntimeException> BinaryOperator<T> toOnlyElementThrowing(Supplier<E> exception) {
+        return (element, otherElement) -> {
+            throw exception.get();
+        };
+    }
+
+    public static <T> Collector<T, ?, T> toSingleton() {
+        return Collectors.collectingAndThen(
+            Collectors.toList(),
+            list -> {
+                if (list.size() != 1) {
+                    throw new IllegalStateException();
+                }
+                return list.get(0);
+            });
+    }
+
+}
