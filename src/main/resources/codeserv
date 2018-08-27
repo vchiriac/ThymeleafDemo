@@ -1,0 +1,53 @@
+import be.buyway.hydra.ikea.kiosk.model.dto.PostalCodes;
+import ch.qos.logback.classic.Logger;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+@Service
+public class CodeService {
+
+    @Value("classpath:postalCodes.csv")
+    private Resource resource;
+
+    private static List<PostalCodes> postalCodes;
+
+    private static Logger LOG = (Logger) LoggerFactory.getLogger(CodeService.class);
+
+    @PostConstruct
+    public void init() {
+        postalCodes = loadObjectList(PostalCodes.class);
+    }
+
+    private <T> List<T> loadObjectList(Class<T> type) {
+
+        try {
+            CsvSchema bootstrapSchema = CsvSchema.emptySchema().withHeader();
+            CsvMapper mapper = new CsvMapper();
+
+            if (resource != null) {
+                MappingIterator<T> readValues = mapper.reader(type).with(bootstrapSchema).readValues(resource.getInputStream());
+                return readValues.readAll();
+            }
+
+        } catch (Exception e) {
+            LOG.error(String.format("The file {%s} doesn't exist. Exception {%s}" ,resource.getFilename() , e.getMessage()), e);
+            return Collections.emptyList();
+        }
+        return new ArrayList<>();
+    }
+
+    public List<PostalCodes> getPostalCodes() {
+        return postalCodes;
+    }
+
+}
