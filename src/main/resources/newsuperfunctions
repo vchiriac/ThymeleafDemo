@@ -1,0 +1,2208 @@
+var timer = 50;
+var timer_b = 10;
+
+var a = "";
+var b = "";
+
+var ikeaFamilyCardValidatorUrl = "/kiosk/ikea/rest/customer/validate/card/";
+var ikeaPhoneValidatorUrl = "/kiosk/ikea/rest/customer/validate/phone/";
+var postalCodesUrl = "/kiosk/ikea/rest/postalcodes/";
+var translationsUrl = "/kiosk/ikea/rest/translations/get?key=";
+var otherHousingUrl = "/kiosk/ikea/rest/otherhousing";
+var bankAccountValidatorUrl = "/kiosk/ikea/rest/customer/validate/account/";
+
+var months = [
+    {name: "Jan", value: 1},
+    {name: "Feb", value: 2},
+    {name: "Mar", value: 3},
+    {name: "Apr", value: 4},
+    {name: "May", value: 5},
+    {name: "Jun", value: 6},
+    {name: "Jul", value: 7},
+    {name: "Aug", value: 8},
+    {name: "Sep", value: 9},
+    {name: "Oct", value: 10},
+    {name: "Nov", value: 11},
+    {name: "Dec", value: 12}
+    ];
+
+window.onload = function () {
+    startTimer();
+};
+
+function startTimer() {
+    a = setTimeout(displayBox, 1000);
+}
+
+function displayBox() {
+    if (timer === 0) {
+        var expirationMessage = $('#expirationMessage')[0].value;
+        var expirationTime = $('#expirationTime')[0].value;
+        $.colorbox({
+            width: "50%",
+            html: expirationMessage + "&nbsp;<span id='timer'>10</span>&nbsp;" + expirationTime
+        });
+        reloadForm();
+    } else {
+        timer--;
+        a = setTimeout(displayBox, 1000);
+    }
+}
+
+function reloadForm() {
+    if (timer_b === 0) {
+        window.location.href = '/kiosk/ikea';
+    } else {
+        timer_b--;
+        $("#timer").html(timer_b);
+        b = setTimeout(reloadForm, 1000);
+    }
+}
+
+function resettimer() {
+    if (timer === 0) {
+        $.colorbox.close();
+        timer = 50;
+        timer_b = 10;
+        a = setTimeout(displayBox, 1000);
+    } else {
+        timer = 50;
+        timer_b = 10;
+    }
+    clearTimeout(b);
+}
+
+function showPartnerDetailsTab(status) {
+    var partnerDetailsPanel = $('#partner-details');
+    var ikeaIndividualCheck = $('#div-ikea-individual');
+    if (status === "MARRIED" || status === "COHABITANT") {
+        selectDefaultValuesForPartner();
+        partnerDetailsPanel.show();
+        // show ikea individual
+        ikeaIndividualCheck.show();
+    } else {
+        partnerDetailsPanel.hide();
+        // hide ikea individual check
+        $('#ikeaIndividual')[0].checked = false;
+        ikeaIndividualCheck.hide();
+    }
+}
+
+function displayChildrenPanel(ev) {
+    var childrenDataPanel = $('#dependent-children');
+    if (ev.value === "true") {
+        childrenDataPanel.show();
+    } else {
+        var childrenNumber = $('#childrenNumber')[0];
+        childrenNumber.value = 0;
+        childrenDataPanel.hide();
+    }
+}
+
+function displayOthersPanel(ev) {
+    var othersDataPanel = $('#dependant-others');
+    if (ev.value === "true") {
+        othersDataPanel.show();
+    } else {
+        var othersInChargeNumber = $('#dependantsNumber')[0];
+        othersInChargeNumber.value = 0;
+        othersDataPanel.hide();
+    }
+}
+
+function displayDefaultPartnerTab(ev) {
+    var partnerDetailsPanel = $('#partner-details');
+    if(partnerDetailsPanel.is(":hidden")) {
+        var defaultSelectedStatus = $('#SINGLE');
+        defaultSelectedStatus[0].checked = true;
+    }
+}
+
+function selectDefaultValues() {
+
+    var inputSelectedCountry = $('#inputSelectedCountry')[0];
+    if(inputSelectedCountry.value) {
+        var countries = $('#countries')[0];
+        $.each(countries, function (index, country) {
+            if(country.value ===  $('#inputSelectedCountry')[0].value) country.selected = true;
+        });
+    }
+
+    var inputOwnerCellPrefix = $('#inputOwnerCellPrefix')[0];
+    if(inputOwnerCellPrefix.value) {
+        var cellPrefixOptions = $('#cellPrefix')[0];
+        $.each(cellPrefixOptions, function (index, prefix) {
+            if(prefix.value ===  $('#inputOwnerCellPrefix')[0].value) prefix.selected = true;
+        });
+    }
+
+    var partnerDetailsPanel = $('#partner-details');
+    if (!partnerDetailsPanel.is(":hidden")) {
+        selectDefaultValuesForPartner();
+    }
+}
+
+function selectDefaultValuesForPartner() {
+    var inputPartnerCellPrefix = $('#inputPartnerCellPrefix')[0];
+    if(inputPartnerCellPrefix.value) {
+        var cellPrefixOptions = $('#partnerCellPrefix')[0];
+        $.each(cellPrefixOptions, function (index, prefix) {
+            if(prefix.value ===  $('#inputPartnerCellPrefix')[0].value) prefix.selected = true;
+        });
+    }
+}
+
+function selectDefaultValuesProfessionalSituation() {
+    var divEmployerInfo = $('#div-employer-info');
+    var divPartnerEmployer = $('#partner-employer-info');
+
+    var form = $('#professional-data-form')[0];
+    if (!divEmployerInfo.is(":hidden")) {
+        var postalCode = form.postalCode.value;
+        var employerCity = form.employerCity.value;
+        var selectedCountry = $("#countries option:selected").val();
+        $.getJSON(postalCodesUrl + selectedCountry, {ajax: 'true'}, function (data) {
+            if (data.length === 0) {
+                $('#div-select-postal-codes').hide();
+                $('#div-input-postal-code').show();
+                $('#inputPostalCode')[0].value = postalCode;
+                $('#inputEmployerCity')[0].value = employerCity;
+            } else {
+                var postalCodes = $('#postalCodes');
+                $('#div-select-postal-codes').show();
+                $('#div-input-postal-code').hide();
+                postalCodes.children('option:not(:first)').remove();
+                $.each(data, function (index, item) {
+                    if(item.value === postalCode && getEmployerCity(item.text) === employerCity) {
+                        $('#postalCodes').append($("<option selected></option>").text(item.text).val(item.value));
+                    } else {
+                        $('#postalCodes').append($("<option></option>").text(item.text).val(item.value));
+                    }
+                });
+                postalCodes.selectpicker('refresh');
+                postalCodes.selectpicker({size: 6, liveSearch: true});
+            }
+        });
+    }
+
+    if (!divPartnerEmployer.is(":hidden")) {
+        var partnerPostalCode = form.partnerPostalCode.value;
+        var partnerEmployerCity = form.partnerEmployerCity.value;
+        var selectedCountryPartner = $("#partnerCountries option:selected").val();
+        $.getJSON(postalCodesUrl + selectedCountryPartner, {ajax: 'true'}, function (data) {
+            if (data.length === 0) {
+                $('#div-select-partner-postal-codes').hide();
+                $('#div-input-partner-postal-code').show();
+                $('#inputPartnerPostalCode')[0].value = partnerPostalCode;
+                $('#inputPartnerEmployerCity')[0].value = partnerEmployerCity;
+            } else {
+                var partnerPostalCodes = $('#partnerPostalCodes');
+                $('#div-select-partner-postal-codes').show();
+                $('#div-input-partner-postal-code').hide();
+                partnerPostalCodes.children('option:not(:first)').remove();
+                $.each(data, function (index, item) {
+                    if(item.value === partnerPostalCode && getEmployerCity(item.text) === partnerEmployerCity) {
+                        $('#partnerPostalCodes').append($("<option selected></option>").text(item.text).val(item.value));
+                    } else {
+                        $('#partnerPostalCodes').append($("<option></option>").text(item.text).val(item.value));
+                    }
+                });
+                partnerPostalCodes.selectpicker('refresh');
+                partnerPostalCodes.selectpicker({size: 6, liveSearch: true});
+            }
+        });
+    }
+
+    var selectedEmpPrefix = $('#inputEmployerCellPrefix')[0];
+    if(selectedEmpPrefix.value) {
+        var empPrefixes = $('#employerCellPrefix')[0];
+        $.each(empPrefixes, function (index, prefix) {
+            if(prefix.value ===  $('#inputEmployerCellPrefix')[0].value) prefix.selected = true;
+        });
+    }
+    var selectedPartnerEmpPrefix = $('#inputPartnerEmployerCellPrefix')[0];
+    if(selectedPartnerEmpPrefix.value) {
+        var empPartnerPrefixes = $('#employerPartnerCellPrefix')[0];
+        $.each(empPartnerPrefixes, function (index, prefix) {
+            if(prefix.value ===  $('#inputPartnerEmployerCellPrefix')[0].value) prefix.selected = true;
+        });
+    }
+}
+
+// Contract types ----------------------------------------------------------------
+function displayContractType(ev) {
+    var contractTypeDiv = $('#div-contract-type');
+    var contractTypeSelection = $('#contractType');
+    var employerDiv = $('#div-employer-info');
+
+    for (var i = 0; i < ev.options.length; i++) {
+        if (ev.options[i].selected) {
+            var displayContractType = ev.options[i].getAttribute('name');
+            var displayPartialInfo = ev.options[i].getAttribute('partialInfo');
+            if (displayContractType === "true") {
+                contractTypeDiv.show();
+                employerDiv.show();
+            } else {
+                if (displayPartialInfo === 'true') {
+                    contractTypeDiv.hide();
+                    employerDiv.show();
+                } else {
+                    clearSelectedEmployerInfo();
+                    contractTypeDiv.hide();
+                    employerDiv.hide();
+                    contractTypeSelection.init(0)[0].value = "0";
+                }
+            }
+        }
+    }
+}
+
+function clearSelectedEmployerInfo() {
+    $('#inputEmployerName')[0].value = "";
+    $('#countries')[0].value = "";
+    $('#inputEmployerAddress')[0].value = "";
+    $('#inputPostalCode')[0].value = "";
+    $('#inputEmployerCity')[0].value = "";
+    $('#employerPhone')[0].value = "";
+    $('#postalCodes')[0].value = "";
+}
+
+function clearSelectedPartnerEmployerInfo() {
+    $('#inputPartnerEmployerName')[0].value = "";
+    $('#partnerCountries')[0].value = "";
+    $('#inputPartnerEmployerAddress')[0].value = "";
+    $('#inputPartnerPostalCode')[0].value = "";
+    $('#inputPartnerEmployerCity')[0].value = "";
+    $('#employerPartnerPhone')[0].value = "";
+    $('#partnerPostalCodes')[0].value = "";
+}
+
+function displayPartnerContractType(ev) {
+    var partnerContractTypeDiv = $('#div-partner-contract-type');
+    var contractTypeSelection = $('#partnerContractType');
+    var employerPartnerDiv = $('#partner-employer-info');
+
+    for (var i = 0; i < ev.options.length; i++) {
+        if (ev.options[i].selected) {
+            var displayContractType = ev.options[i].getAttribute('name');
+            var displayPartialInfo = ev.options[i].getAttribute('partialInfo');
+            if (displayContractType === "true") {
+                partnerContractTypeDiv.show();
+                employerPartnerDiv.show();
+            } else {
+                if (displayPartialInfo === 'true') {
+                    partnerContractTypeDiv.hide();
+                    employerPartnerDiv.show();
+                } else {
+                    clearSelectedPartnerEmployerInfo();
+                    employerPartnerDiv.hide();
+                    partnerContractTypeDiv.hide();
+                    contractTypeSelection.init(0)[0].value = "0";
+                }
+            }
+        }
+    }
+}
+// Contract types ----------------------------------------------------------------
+// Postal codes ------------------------------------------------------------------
+function displayPostalCodes(ev) {
+    var selectedCountry = $("#countries option:selected").val();
+    var postalCodes = $('#postalCodes');
+    postalCodes.children('option:not(:first)').remove();
+    $.getJSON(postalCodesUrl + selectedCountry, {ajax: 'true'}, function (data) {
+        if (data.length === 0) {
+            $('#div-select-postal-codes').hide();
+            $('#div-input-postal-code').show();
+        } else {
+            $.each(data, function (index, item) {
+                postalCodes.append($("<option></option>").text(item.text).val(item.value));
+            });
+            $('#div-select-postal-codes').show();
+            postalCodes.selectpicker('refresh');
+            $('#div-input-postal-code').hide();
+            postalCodes.selectpicker({size: 6, liveSearch: true});
+        }
+    });
+}
+
+function displayPartnerPostalCodes(ev) {
+    var selectedCountry = $("#partnerCountries option:selected").val();
+    var partnerPostalCodes = $('#partnerPostalCodes');
+    partnerPostalCodes.children('option:not(:first)').remove();
+    $.getJSON(postalCodesUrl + selectedCountry, {ajax: 'true'}, function (data) {
+        if (data.length === 0) {
+            $('#div-select-partner-postal-codes').hide();
+            $('#div-input-partner-postal-code').show();
+        } else {
+            $.each(data, function (index, item) {
+                partnerPostalCodes.append($("<option></option>").text(item.text).val(item.value));
+            });
+            $('#div-select-partner-postal-codes').show();
+            partnerPostalCodes.selectpicker('refresh');
+            partnerPostalCodes.selectpicker({size: 6, liveSearch: true});
+            $('#div-input-partner-postal-code').hide();
+        }
+    });
+}
+// Postal codes ------------------------------------------------------------------
+
+function getTranslation(message) {
+    return $.ajax({
+        type: "GET",
+        url: translationsUrl + message,
+        async: false
+    }).responseText;
+}
+
+function validateIkeaFamilyCard(card) {
+    return $.ajax({
+        type: "GET",
+        url: ikeaFamilyCardValidatorUrl + card,
+        async: false
+    }).responseText;
+}
+
+function validateIkeaCard(card) {
+    return validateIkeaFamilyCard(card.value);
+}
+
+function validateIkeaPhone(prefix, phoneNumber) {
+    return $.ajax({
+        type: "GET",
+        url: ikeaPhoneValidatorUrl + prefix + '/' + phoneNumber,
+        async: false
+    }).responseText;
+}
+
+function validateBankAccount(countryCode, accountNumber) {
+    return $.ajax({
+        type: "GET",
+        url: bankAccountValidatorUrl + countryCode + '/' + accountNumber,
+        async: false
+    }).responseText;
+}
+
+function showFinancialPanel(status) {
+    $('span#ACCESSING_OWNERSHIP')[0].className = "checkmark big_checkmark";
+    $('span#OWNER')[0].className = "checkmark big_checkmark";
+    $('span#RENTING')[0].className = "checkmark big_checkmark";
+    $('span#HOUSED_BY_FAMILY')[0].className = "checkmark big_checkmark";
+    $('span#HOUSED_BY_EMPLOYER')[0].className = "checkmark big_checkmark";
+    $('span#OTHER')[0].className = "checkmark big_checkmark";
+
+    var otherFinancialStatusPanel = $('#div-other-financial-status');
+    if (status == 6) {
+        otherFinancialStatusPanel.show();
+    } else {
+        $('#otherFinancialStatus')[0].value = '0';
+        otherFinancialStatusPanel.hide();
+    }
+}
+
+function checkHousingStatusIsOther() {
+   return $('#OTHER')[0].checked;
+}
+
+function checkOneHousingStatusIsSelected() {
+    return $('#OTHER')[0].checked || $('#ACCESSING_OWNERSHIP')[0].checked ||
+        $('#OWNER')[0].checked || $('#RENTING')[0].checked ||
+        $('#HOUSED_BY_FAMILY')[0].checked || $('#HOUSED_BY_EMPLOYER')[0].checked;
+}
+
+function checkHousingStatusIsAccessingOwnership() {
+    return $('#ACCESSING_OWNERSHIP')[0].checked;
+}
+
+function checkHousingStatusIsRenting() {
+    return $('#RENTING')[0].checked;
+}
+
+function displayDefaultFinancialStatus(ev) {
+    var otherFinancialStatusPanel = $('#div-other-financial-status');
+    if(checkHousingStatusIsOther()) {
+        otherFinancialStatusPanel.show();
+    }
+
+    var ibanFormat = "";
+
+    var iban = $('#iban')[0];
+    if (iban.value.length > 0 ) {
+        $('#inputBankAccount')[0].value = iban.value.substring(2);
+    }
+
+    var countryCodes = $("#countryCode")[0];
+    if(countryCodes !== undefined) {
+        var inputBankAcct = $("#inputBankAccount");
+        $.each(countryCodes, function (index, country) {
+            if (country.getAttribute('defaultSelected') === "true") {
+                ibanFormat = country.getAttribute('ibanFormat');
+            }
+        });
+        inputBankAcct.inputmask({"mask": ibanFormat, "clearMaskOnLostFocus" : false, "placeholder": "\u0020"});
+    }
+}
+
+function displayOtherHousing() {
+    $.getJSON(otherHousingUrl, {ajax: 'true'}, function (data) {
+        if (data.length !== 0) {
+            $('#otherFinancialStatus').children('option:not(:first)').remove();
+            $.each(data, function (index, item) {
+                $('#otherFinancialStatus').append($("<option></option>").text(item).val(item));
+            });
+        }
+    });
+}
+
+function displayIkeaFamilyPopUp() {
+    $.colorbox({
+        width: "40%",
+        html: "<h2 style='margin-top:0px;'>Carte IKEA FAMILY</h2>" +
+        "<br/><br/>Si vous ne poss&eacute;dez pas encore de carte Ikea Family, merci d'en cr&eacute;er une au pr&eacute;alable &agrave; l'aide des bornes mises &agrave; votre disposition &agrave; cet effet.<br/>" +
+        "<br/>Vous pourrez ensuite initier votre demande d'Ikea Family Mastercard en scannant le code-barres qui vous sera remis."
+    });
+}
+
+function displayData(object) {
+    console.log(JSON.stringify(object));
+}
+
+function checkLength(len, ele) {
+    var fieldLength = ele.value.length;
+    if (fieldLength <= len) {
+        return true;
+    } else {
+        var str = ele.value;
+        str = str.substring(0, str.length - 1);
+        ele.value = str;
+    }
+}
+
+function onChange(e) {
+    if (e.keyCode < 48 || e.keyCode > 57) {
+        console.log('not a number');
+    }
+}
+
+$( document ).ready(function () {
+    $("#countryCode").on('change', function (event) {
+        var ibanFormat = event.target.selectedOptions[0].getAttribute('ibanFormat');
+        $("#inputBankAccount").inputmask({"mask": ibanFormat, "clearMaskOnLostFocus" : false, "placeholder": "\u0020"});
+    });
+});
+
+function digitOnly(evt) {
+    var theEvent = evt || window.event;
+    // Handle paste
+    if (theEvent.type === 'paste') {
+        key = event.clipboardData.getData('text/plain');
+    } else {
+        // Handle key press
+        var key = theEvent.keyCode || theEvent.which;
+        key = String.fromCharCode(key);
+    }
+    var regex = /[0-9]|\./;
+    if (!regex.test(key)) {
+        theEvent.returnValue = false;
+        if (theEvent.preventDefault) theEvent.preventDefault();
+    }
+}
+
+function alphaOnly(evt) {
+    var theEvent = evt || window.event;
+    if (theEvent.type === 'paste') {
+        key = event.clipboardData.getData('text/plain');
+    } else {
+        // Handle key press
+        var key = theEvent.keyCode || theEvent.which;
+        key = String.fromCharCode(key);
+    }
+    var regex = /^[a-zA-Z-]+$/;
+    if (!regex.test(key)) {
+        theEvent.returnValue = false;
+        if (theEvent.preventDefault) theEvent.preventDefault();
+    }
+}
+
+function dateOnly(field, evt) {
+    var theEvent = evt || window.event;
+    var inputValue = field.value;
+    // Handle paste
+    if (theEvent.type === 'paste') {
+        key = event.clipboardData.getData('text/plain');
+    } else {
+        // Handle key press
+        var key = theEvent.keyCode || theEvent.which;
+        key = String.fromCharCode(key);
+    }
+    var regex = /[0-9]|\./;
+    if (!regex.test(key)) {
+        theEvent.returnValue = false;
+        if (theEvent.preventDefault) theEvent.preventDefault();
+    }
+    if(field.value.length === 2 || field.value.length === 5) {
+        field.value = inputValue + "/";
+    } else {
+        if(key === "/") {
+            theEvent.returnValue = false;
+            if (theEvent.preventDefault) theEvent.preventDefault();
+        }
+    }
+}
+
+// validates last name
+function validateLastName(field) {
+    var parent = field.parentElement.parentNode;
+    if(!isNotEmpty(field)) {
+        show_error_message(parent, getTranslation('message.validation.ikea.family.card.not.empty'));
+        return false;
+    }
+    if(!checkStringForAllSpecialCharsAndDigits(field)) {
+        field.className = 'form-control form-validation-error';
+        show_error_message(parent, getTranslation('message.dossier.details.customer.error.only.characters'));
+        return false;
+    }
+    return true;
+}
+// validates first name
+function validateFirstName(field) {
+    var parent = field.parentElement.parentNode;
+    field.className = 'form-control';
+    if(!isNotEmpty(field)) {
+        show_error_message(parent, getTranslation('message.validation.ikea.family.card.not.empty'));
+        return false;
+    }
+
+    if(!checkStringForSpecialCharsAndDigits(field)) {
+        field.className = 'form-control form-validation-error';
+        show_error_message(parent, getTranslation('message.dossier.details.customer.error.only.characters'));
+        return false;
+    }
+
+    if(!checkStringFormMaximumOneDash(field)) {
+        field.className = 'form-control form-validation-error';
+        show_error_message(parent, getTranslation('message.validation.ikea.family.customer.name.error'));
+        return false;
+    }
+    return true;
+}
+
+function checkStringForAllSpecialCharsAndDigits(field) {
+    var regex = /^[a-zA-Z\s]+$/;
+    var fieldData = field.value;
+    return regex.test(fieldData);
+}
+
+function checkStringForSpecialCharsAndDigits(field) {
+    var regex = /^[a-zA-Z-]+$/;
+    var fieldData = field.value;
+    return regex.test(fieldData);
+}
+
+function checkStringFormMaximumOneDash(field) {
+    var regex = /^[^-]*-?[^-]*$/;
+    var fieldData = field.value;
+    return regex.test(fieldData);
+}
+
+function validateIsNotEmpty(field) {
+    var message = null;
+    var parent = field.parentElement.parentNode;
+    if(field.id === "phone") {
+        parent = $('#div-customer-phone')[0];
+    }
+    if(field.id === "partnerPhone") {
+        parent = $('#div-customer-partner-phone')[0];
+    }
+    if(field.id === "employerPhone") {
+        parent = $('#div-employer-phone')[0];
+    }
+    if(field.id === "employerPartnerPhone") {
+        parent = $('#div-partner-employer-phone')[0];
+    }
+    if(field.id === "inputBankAccount") {
+       parent = $('#div-customer-bank-account')[0];
+    }
+    if(field.id === "inputEmployerCity") {
+        parent = $('#div-input-postal-code')[0];
+    }
+    if(field.id === "inputPartnerEmployerCity") {
+        parent = $('#div-input-partner-postal-code')[0];
+    }
+    if(!isNotEmpty(field)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+        show_error_message(parent, message);
+        return false;
+    }
+    return true;
+}
+
+function validateFinancialFieldIsNotEmpty(field){
+    var message = null;
+    var parent = field.parentElement.parentNode;
+    if(!isNotEmpty(field)) {
+        message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+        show_error_message(parent, message);
+        return false;
+    }
+    return true;
+}
+
+function isNotEmpty(field) {
+    var fieldData = field.value;
+    field.className = 'form-control';
+    if(!fieldData || fieldData.trim() === "") {
+        field.className = 'form-control form-validation-error';
+        return false;
+    }
+    return true;
+}
+
+function formatAsDate(field) {
+    var fieldData = field.value;
+    if(fieldData.substring(2,3) === '/' && fieldData.substring(5,6) === '/') {
+        return true;
+    }
+    var screenDate = field.value.replace(/\//g, '');
+    var day = screenDate.substring(0,2);
+    var month = screenDate.substring(2,4);
+    var year = screenDate.substring(4,8);
+    fieldData = day + '/' + month + '/' + year;
+    field.value = fieldData;
+    return true;
+}
+
+function checkIfNotZero(field) {
+    var fieldData = field.value;
+    if(fieldData === "0") {
+        field.className = 'form-control form-validation-error';
+        return false;
+    } else {
+        field.className = 'form-control';
+        return true;
+    }
+}
+
+function checkMandatoryField(field) {
+    var errMessage = null;
+    var parent = field.parentElement.parentNode;
+    if(!isNotEmpty(field)) {
+        errMessage = getTranslation('message.validation.ikea.family.card.not.empty');
+    }
+    if(errMessage) {
+        show_error_message(parent, errMessage);
+        return false;
+    }
+    return true;
+}
+
+function validateEmailOnBlur(field) {
+    var message = null;
+    var parent = field.parentElement.parentNode;
+    if(!isNotEmpty(field)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        if(!validateEmail(field)) {
+            message = getTranslation('message.dossier.professional.data.customer.wrong.email');
+        }
+    }
+    if(message) {
+        show_error_message(parent, message);
+        return false;
+    }
+    return true;
+}
+
+function validateEmail(field) {
+    field.className = 'form-control';
+    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    if(!re.test(field.value)) {
+        field.className = 'form-control form-validation-error';
+        return false;
+    }
+    return true;
+}
+
+function checkDate(field) {
+    var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+    var yearNow = new Date().getFullYear();
+    var screenDate = field.value.replace(/\//g, '');
+    var day = parseInt(screenDate.substring(0,2) ,10);
+    var month = parseInt(screenDate.substring(2,4), 10);
+    var year = parseInt(screenDate.substring(4,8), 10);
+
+    var errMessage = null;
+    field.className = 'form-control';
+
+    if(isNaN(day) || isNaN(month) || isNaN(year)) {
+        errMessage = getTranslation('message.validation.ikea.family.date.invalid.format');
+    }
+    // Adjust for leap years
+    if(year % 400 == 0 || (year % 100 != 0 && year % 4 == 0)) {
+        monthLength[1] = 29;
+    }
+    if(year < 1000 || year > 3000 || month === 0 || month > 12 ||  day > monthLength[month - 1]) {
+        errMessage = getTranslation('message.validation.ikea.family.date.invalid.format');
+    }
+    if(yearNow - year <= 0) {
+        errMessage = getTranslation('message.validation.ikea.family.date.invalid.date');
+    }
+    if(yearNow - year > 75) {
+        errMessage = getTranslation('message.validation.ikea.family.date.too.old');
+    }
+    if(yearNow - year < 18 && yearNow - year > 0) {
+        errMessage = getTranslation('message.validation.ikea.family.date.too.young');
+    }
+    if(errMessage) {
+        field.className = 'form-control form-validation-error';
+    }
+    return errMessage;
+}
+
+function validateJobSelector(field) {
+    var fieldData = field.value;
+    var errMessage = null;
+    var parent = field.parentElement.parentNode;
+    field.className = 'styled-select';
+    if(fieldData === "0" || !fieldData) {
+        errMessage = getTranslation('message.validation.ikea.family.card.not.empty');
+    }
+    if(errMessage) {
+        field.className = 'styled-select select-validation-error';
+        show_error_message(parent, errMessage);
+        return false;
+    }
+    return true;
+}
+
+function validateForm(form) {
+    if(form.id === 'scan-form') return validateScanForm(form);
+    if(form.id === 'personal-data-form') return validatePersonalDataForm(form);
+    if(form.id === 'professional-data-form') return validateProfessionalDataForm(form);
+    if(form.id ==='financial-data-form') return validateFinancialDataForm(form);
+}
+
+function checkFromYear(field) {
+    var errMessage = validateYear(field);
+    field.className = 'form-control';
+    var parent = field.parentElement.parentNode;
+    if(errMessage) {
+        field.className = "form-control form-validation-error";
+        show_error_message(parent, getTranslation(errMessage));
+        return false;
+    }
+    var customerJobMothFrom =  $('#div-customer-job-month');
+    var yearNow = new Date().getFullYear();
+    var year = parseInt(field.value, 10);
+    if(yearNow - year < 2) {
+        customerJobMothFrom.show();
+    } else {
+        if (!customerJobMothFrom.is(":hidden")) {
+            $('#inputFromMonth')[0].value = "0";
+            customerJobMothFrom.hide();
+        }
+    }
+    return true;
+}
+function validateYear(field) {
+    var errMessage = null;
+    var year = parseInt(field.value, 10);
+    //var yearNow = new Date().getFullYear();
+    var customerBirthDate = $('#customerBirthDate')[0].value;
+    var birthdayYear = parseInt(convertToYear(customerBirthDate), 10);
+    errMessage = checkYear(year, birthdayYear);
+    return errMessage;
+}
+
+function checkFromPartnerYear(field) {
+    var errMessage = validatePartnerYear(field);
+    var parent = field.parentElement.parentNode;
+    if(errMessage) {
+        field.className = "form-control form-validation-error";
+        show_error_message(parent, getTranslation(errMessage));
+        return false;
+    }
+    var customerJobMothFrom =  $('#div-customer-partner-job-month');
+    var year = parseInt(field.value, 10);
+    var yearNow = new Date().getFullYear();
+    if(yearNow - year < 2) {
+        customerJobMothFrom.show();
+    } else {
+        if (!customerJobMothFrom.is(":hidden")) {
+            $('#inputPartnerFromMonth')[0].value = "0";
+            customerJobMothFrom.hide();
+        }
+    }
+    field.className = 'form-control';
+    return true;
+}
+function validatePartnerYear(field) {
+    var errMessage = null;
+    var year = parseInt(field.value, 10);
+    //var yearNow = new Date().getFullYear();
+    var customerPartnerBirthDate = $('#customerPartnerBirthDate')[0].value;
+    var birthdayYear = parseInt(convertToYear(customerPartnerBirthDate), 10);
+    errMessage = checkYear(year, birthdayYear);
+    return errMessage;
+}
+
+function checkYear(year, birthdayYear) {
+    var errMessage = null;
+    var yearNow = new Date().getFullYear();
+    if (year > yearNow) {
+        errMessage = 'message.validation.ikea.family.date.not.correct';
+    } else {
+        if (year < birthdayYear) {
+            // If year is 1900, this doesn't mean it is invalid ?
+            errMessage = 'message.validation.ikea.customer.startjob.date.error';
+        } else {
+            if (year - birthdayYear < 16) {
+                errMessage = 'message.validation.ikea.customer.startjob.date.error';
+            }
+        }
+    }
+    return errMessage;
+}
+
+function checkFromMonth(field) {
+    var year = $('#inputFromYear')[0].value;
+    if (field.id === "inputPartnerFromMonth") {
+        year = $('#inputFromPartnerYear')[0].value;
+    }
+    var errMessage = checkMonth(field, year);
+    field.className = 'styled-select';
+
+    if(errMessage) {
+        var parent = field.parentElement.parentNode;
+        field.className = 'styled-select select-validation-error';
+        show_error_message(parent, getTranslation(errMessage));
+        return false;
+    }
+    return true;
+}
+
+function checkMonth(field, year) {
+    var month = parseInt(field.value, 10);
+    var yearNow = new Date().getFullYear();
+    var monthNow = new Date().getMonth();
+    if(month < 1 || month > 12) {
+        return 'message.validation.ikea.family.date.invalid.month.format';
+    }
+    if(year >= yearNow && month > monthNow + 1) {
+        return 'message.validation.ikea.family.date.not.correct';
+    }
+    return null;
+}
+
+function checkFinancialYear(field) {
+    var errMessage = null;
+    field.className = '';
+    var yearNow = new Date().getFullYear();
+    var year = parseInt(field.value, 10);
+
+    if(year > yearNow) {
+        errMessage = 'message.validation.ikea.family.date.not.correct';
+    }
+    if(year < 1970) {
+        errMessage = 'message.validation.ikea.family.year.invalid';
+    }
+    if(errMessage) {
+        field.className = 'select-validation-error';
+    }
+    return errMessage;
+}
+
+$( document ).ready(function() {
+
+    $('#ikeaFamilyCardNumber').bind('keyup','keydown', function(event) {
+        var theForm = $('#scan-form')[0];
+        var element = $('#ikeaFamilyCardNumber')[0];
+        var parent = $('#div-ikeaFamilyCardNumber')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#customerLastName').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#customerLastName')[0];
+        var parent = $('#div-customer-first-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#customerFirstName').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#customerFirstName')[0];
+        var parent = $('#div-customer-last-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#birthDate').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#birthDate')[0];
+        var parent = $('#div-customer-birthday')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#email').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#email')[0];
+        var parent = $('#div-customer-email')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#phone').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#phone')[0];
+        var parent = $('#div-customer-phone')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#partnerName').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#partnerName')[0];
+        var parent = $('#div-customer-partner-last-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#partnerFirstName').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#partnerFirstName')[0];
+        var parent = $('#div-customer-partner-first-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#partnerBirthDate').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#partnerBirthDate')[0];
+        var parent = $('#div-customer-partner-birth-date')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#partnerEmail').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#partnerEmail')[0];
+        var parent = $('#div-customer-partner-email')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#partnerPhone').bind('keyup','keydown', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#partnerPhone')[0];
+        var parent = $('#div-customer-partner-phone')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#childrenNumber').on('change', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#childrenNumber')[0];
+        var parent = $('#dependent-children')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#dependantsNumber').on('change', function(event) {
+        var theForm = $('#personal-data-form')[0];
+        var element = $('#dependantsNumber')[0];
+        var parent = $('#dependant-others')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#situationProf').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#situationProf')[0];
+        var parent = $('#div-professional-status')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputFromYear').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputFromYear')[0];
+        var parent = $('#div-customer-job-year')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputFromMonth').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputFromMonth')[0];
+        var parent = $('#div-customer-job-month')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#contractType').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#contractType')[0];
+        var parent = $('#div-contract-type')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#inputEmployerName').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputEmployerName')[0];
+        var parent = $('#div-employer-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+   $('#countries').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#countries')[0];
+        var parent = $('#div-countries')[0];
+        clear_errors(parent, element, theForm);
+       $('#postalCodes').trigger("change");
+    });
+    $('#inputEmployerAddress').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputEmployerAddress')[0];
+        var parent = $('#div-employer-address')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#postalCodes').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#postalCodes')[0];
+        var parent = $('#div-postal-codes')[0];
+        clear_errors(parent, element, theForm);
+        $('button.btn.dropdown-toggle.btn-default')[0].className = "btn dropdown-toggle btn-default";
+    });
+    $('#inputPostalCode').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPostalCode')[0];
+        var parent = $('#div-input-postal-code')[0];
+        clear_errors(parent, element, theForm);
+    });
+   $('#inputEmployerCity').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputEmployerCity')[0];
+        var parent = $('#div-input-postal-code')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#employerPhone').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#employerPhone')[0];
+        var parent = $('#div-employer-phone')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#situationProfPartner').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#situationProfPartner')[0];
+        var parent = $('#div-partner-professional-status')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputFromPartnerYear').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputFromPartnerYear')[0];
+        var parent = $('#div-customer-partner-job-year')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputPartnerFromMonth').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPartnerFromMonth')[0];
+        var parent = $('#div-customer-partner-job-month')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#partnerContractType').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#partnerContractType')[0];
+        var parent = $('#div-partner-contract-type')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#inputPartnerEmployerName').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPartnerEmployerName')[0];
+        var parent = $('#div-partner-employer-name')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#partnerCountries').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#partnerCountries')[0];
+        var parent = $('#div-partner-countries')[0];
+        clear_errors(parent, element, theForm);
+        $('#partnerPostalCodes').trigger("change");
+    });
+    $('#inputPartnerEmployerAddress').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPartnerEmployerAddress')[0];
+        var parent = $('#div-partner-employer-address')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#partnerPostalCodes').on('change', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#partnerPostalCodes')[0];
+        var parent = $('#div-partner-postal-codes')[0];
+        clear_errors(parent, element, theForm);
+        $('button.btn.dropdown-toggle.btn-default')[1].className = "btn dropdown-toggle btn-default";
+    });
+    $('#inputPartnerPostalCode').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPartnerPostalCode')[0];
+        var parent = $('#div-input-partner-postal-code')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputPartnerEmployerCity').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#inputPartnerEmployerCity')[0];
+        var parent = $('#div-input-partner-postal-code')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#employerPartnerPhone').bind('keyup','keydown', function(event) {
+        var theForm = $('#professional-data-form')[0];
+        var element = $('#employerPartnerPhone')[0];
+        var parent = $('#div-partner-employer-phone')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    // financial data error clear
+    $('#selectOtherFinancialStatus').on('change', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#selectOtherFinancialStatus')[0];
+        var parent = $('#div-other-financial-status')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#housingStatusDiv').on('click', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#housingStatusDiv')[0];
+        var parent = $('#div-financial-status')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputPeriodStart').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputPeriodStart')[0];
+        var parent = $('#div-from-period')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputBankAccount').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputBankAccount')[0];
+        var parent = $('#div-customer-bank-account')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputPeriodBankAccount').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputPeriodBankAccount')[0];
+        var parent = $('#div-bank-account-open-period')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyRevenue').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyRevenue')[0];
+        var parent = $('#div-customer-monthly-revenue')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyOtherRevenue').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyOtherRevenue')[0];
+        var parent = $('#div-customer-monthly-other-revenue')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesAlimony').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesAlimony')[0];
+        var parent = $('#div-customer-monthly-charges-alimony')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesFamilyAllowance').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesFamilyAllowance')[0];
+        var parent = $('#div-customer-monthly-charges-family-allowance')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyPartnerRevenue').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyPartnerRevenue')[0];
+        var parent = $('#div-customer-partner-monthly-revenue')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyPartnerOtherRevenue').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyPartnerOtherRevenue')[0];
+        var parent = $('#div-customer-partner-monthly-other-revenue')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyCharges').on('change', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyCharges')[0];
+        var parent = $('#div-customer-monthly-charges')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesCreditCard').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesCreditCard')[0];
+        var parent = $('#div-customer-monthly-charges-card-credit')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesCreditHouse').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesCreditHouse')[0];
+        var parent = $('#div-customer-monthly-charges-house-credit')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesRent').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesRent')[0];
+        var parent = $('#div-customer-monthly-charges-rent')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesCarCredit').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesCarCredit')[0];
+        var parent = $('#div-customer-monthly-charges-car-credit')[0];
+        clear_errors(parent, element, theForm);
+    });
+    $('#inputMonthlyChargesOtherCredit').bind('keyup','keydown', function(event) {
+        var theForm = $('#financial-data-form')[0];
+        var element = $('#inputMonthlyChargesOtherCredit')[0];
+        var parent = $('#div-customer-monthly-charges-other-credit')[0];
+        clear_errors(parent, element, theForm);
+    });
+
+    $('#cancellationLink').on("click", function(e) {
+        e.preventDefault();
+        bootbox.confirm({
+            message: getTranslation('message.information.ikea.popup.confirmation'),
+            buttons: {
+                confirm: {
+                    label: getTranslation('message.dossier.details.customer.yes'),
+                    className: 'btn-danger'
+                },
+                cancel: {
+                    label: getTranslation('message.dossier.details.customer.no'),
+                    className: 'btn-success'
+                }
+            },
+            callback: function (result) {
+                if(result) {
+                    window.location = $('#cancellationLink').attr("href");
+                }
+            }
+        });
+    });
+    $('#submitCancellationLink').on("click", function(e) {
+        e.preventDefault();
+        bootbox.confirm({
+            message: getTranslation('message.information.ikea.popup.confirmation'),
+            buttons: {
+                confirm: {
+                    label: getTranslation('message.dossier.details.customer.yes'),
+                    className: 'btn-danger'
+                },
+                cancel: {
+                    label: getTranslation('message.dossier.details.customer.no'),
+                    className: 'btn-success'
+                }
+            },
+            callback: function (result) {
+                if(result) {
+                    window.location = $('#submitCancellationLink').attr("href");
+                }
+            }
+        });
+    });
+});
+
+function clear_errors(parent, element, form) {
+    var errors = form.querySelectorAll('.bubble');
+    $.each(errors, function (index, error) {
+        if(error && error.parentElement === parent) {
+            parent.removeChild(error);
+            setInitialClassName(element);
+        }
+    });
+}
+
+function setInitialClassName(element) {
+    if (element.className.includes('form-control')) {
+        element.className = 'form-control';
+    } else {
+        if(element.className.includes('small_number')) {
+            element.className = 'small_number';
+        } else {
+            if(element.className.includes('styled-select')) {
+                element.className = 'styled-select';
+            }
+        }
+    }
+}
+
+function show_error_message(parent, message) {
+    parent.insertAdjacentHTML("beforeend", "<span class='bubble'>"+ message + "</span>");
+}
+
+// validate ikea scan form
+function validateScanForm(form) {
+    var message = null;
+    var ikeaFamilyCardNumber =  form.ikeaFamilyCardNumber;
+    var parent = ikeaFamilyCardNumber.parentNode;
+    ikeaFamilyCardNumber.className = 'form-control';
+
+    if(!isNotEmpty(ikeaFamilyCardNumber)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        var error = validateIkeaCard(ikeaFamilyCardNumber);
+        if (error) {
+            message = getTranslation(error);
+            ikeaFamilyCardNumber.className = 'form-control form-validation-error';
+        }
+    }
+    if(message) {
+        show_error_message(parent, message);
+        return false;
+    }
+    return true;
+}
+
+// validate personal data form
+function validatePersonalDataForm(form) {
+    var errorMessages = [];
+    var customerLastName = form.customerLastName;
+    var customerFirstName = form.customerFirstName;
+    var birthDate = form.birthDate;
+    var email = form.email;
+    var prefix = form.cellPrefix;
+    var phone = form.phone;
+    var message = null;
+    var parent = null;
+
+    // owner last name - there is a div switch between last name and first name
+    parent = $('#div-customer-first-name')[0];
+    if(!isNotEmpty(customerLastName)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        if(!checkStringForAllSpecialCharsAndDigits(customerLastName)) {
+            customerLastName.className = 'form-control form-validation-error';
+            message = getTranslation('message.dossier.details.customer.error.only.characters');
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // owner first name - there is a div switch between last name and first name
+    message = null;
+    parent = $('#div-customer-last-name')[0];
+    if(!isNotEmpty(customerFirstName)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        if(!checkStringForSpecialCharsAndDigits(customerFirstName)) {
+            customerFirstName.className = 'form-control form-validation-error';
+            message = getTranslation('message.dossier.details.customer.error.only.characters');
+        } else {
+            if(!checkStringFormMaximumOneDash(customerFirstName)) {
+                customerFirstName.className = 'form-control form-validation-error';
+                message = getTranslation('message.validation.ikea.family.customer.name.error');
+            }
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // owner birth date
+    parent = $('#div-customer-birthday')[0];
+    message = null;
+    if(!isNotEmpty(birthDate)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        message = checkDate(birthDate);
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // country
+    if(form.countries.value) {
+        form.inputSelectedCountry.value = form.countries.value;
+    }
+    // owner e-mail
+    message = null;
+    parent = $('#div-customer-email')[0];
+    if(!isNotEmpty(email)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        if(!validateEmail(email)) {
+            message = getTranslation('message.dossier.professional.data.customer.wrong.email');
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // owner phone number
+    message = null;
+    parent = $('#div-customer-phone')[0];
+    form.inputOwnerCellPrefix.value = prefix.value;
+    if(!isNotEmpty(phone)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        var err = validateIkeaPhone(prefix.value, phone.value);
+        if (err) {
+            message = getTranslation(err);
+            phone.className = 'form-control form-validation-error';
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    var partnerDetailsPanel = $('#partner-details');
+    if (!partnerDetailsPanel.is(":hidden")) {
+        var partnerLastName = form.partnerName;
+        var partnerFirstName = form.partnerFirstName;
+        var partnerBirthDate = form.partnerBirthDate;
+        var partnerEmail = form.partnerEmail;
+        var partnerPhone = form.partnerPhone;
+        var partnerCellPrefix = form.partnerCellPrefix;
+
+        // partner last name
+        message = null;
+        parent = $('#div-customer-partner-last-name')[0];
+        if(!isNotEmpty(partnerLastName)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            if(!checkStringForAllSpecialCharsAndDigits(partnerLastName)) {
+                partnerLastName.className = 'form-control form-validation-error';
+                message = getTranslation('message.dossier.details.customer.error.only.characters');
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // partner first name
+        message = null;
+        parent = $('#div-customer-partner-first-name')[0];
+        if(!isNotEmpty(partnerFirstName)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            if(!checkStringForSpecialCharsAndDigits(partnerFirstName)) {
+                partnerFirstName.className = 'form-control form-validation-error';
+                message = getTranslation('message.dossier.details.customer.error.only.characters');
+            } else {
+                if(!checkStringFormMaximumOneDash(partnerFirstName)) {
+                    partnerFirstName.className = 'form-control form-validation-error';
+                    message = getTranslation('message.validation.ikea.family.customer.name.error');
+                }
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+
+        // partner birth date
+        message = null;
+        parent = $('#div-customer-partner-birth-date')[0];
+        if(!isNotEmpty(partnerBirthDate)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            message = checkDate(partnerBirthDate);
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+
+        // partner e-mail
+        message = null;
+        parent = $('#div-customer-partner-email')[0];
+        if(!isNotEmpty(partnerEmail)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            if(!validateEmail(partnerEmail)) {
+                message = getTranslation('message.dossier.professional.data.customer.wrong.email');
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+
+        // partner phone
+        message = null;
+        parent = $('#div-customer-partner-phone')[0];
+        form.inputPartnerCellPrefix.value = partnerCellPrefix.value;
+        if(!isNotEmpty(partnerPhone)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            err = validateIkeaPhone(partnerCellPrefix.value, partnerPhone.value);
+            if (err) {
+                message = getTranslation(err);
+                partnerPhone.className = 'form-control form-validation-error';
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    }
+
+    // validate children in charge
+    message = null;
+    var childrenNumber = $('#childrenNumber');
+    parent = $('#dependent-children')[0];
+    if (!childrenNumber.is(":hidden") && form.childrenNumber.value === "0") {
+        form.childrenNumber.className = 'small_number form-validation-error';
+        message = getTranslation('message.validation.ikea.family.children.in.charge.error');
+    } else {
+        form.childrenNumber.className = 'small_number';
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // validate other persons in charge
+    message = null;
+    var dependantsNumber = $('#dependantsNumber');
+    parent = $('#dependant-others')[0];
+    if (!dependantsNumber.is(":hidden") && form.dependantsNumber.value === "0") {
+        form.dependantsNumber.className = 'small_number form-validation-error';
+        message = getTranslation('message.validation.ikea.family.others.in.charge.error');
+
+    } else {
+        form.dependantsNumber.className = 'small_number';
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    return errorMessages.length === 0;
+}
+
+// validate professional data form
+function validateProfessionalDataForm(form) {
+    var errorMessages = [];
+
+    var situationProf = form.situationProf;
+    var inputFromYear = form.inputFromYear;
+    var parent = null;
+    var message = null;
+
+    // professional status
+    parent = $('#div-professional-status')[0];
+    if(situationProf.value === "0") {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+        situationProf.className = 'styled-select select-validation-error';
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // from year
+    message = null;
+    parent = $('#div-customer-job-year')[0];
+    if(!isNotEmpty(inputFromYear)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        var errMessage = validateYear(inputFromYear);
+        if(errMessage) {
+            form.inputFromYear.className = 'form-validation-error';
+            message = getTranslation(errMessage);
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // from month, in case selected year > current year - 2
+    var customerMonthPanel = $('#div-customer-job-month');
+    if (!customerMonthPanel.is(":hidden")) {
+        message = null;
+        parent = customerMonthPanel[0];
+        if(form.inputFromMonth.value === "0") {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+            var invalidMonth = checkMonth(form.inputFromMonth, inputFromYear.value);
+            if(invalidMonth) {
+                message = getTranslation(invalidMonth);
+            }
+        }
+        if(message) {
+            form.inputFromMonth.className = "styled-select select-validation-error";
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    }
+
+    // customer contract type
+    var customerContractType = $('#div-contract-type');
+    if(!customerContractType.is(":hidden")) {
+        message = null;
+        parent = customerContractType[0];
+        var contractType = form.contractType;
+        if(contractType.value === '0') {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        }
+        if(message) {
+            contractType.className = "styled-select select-validation-error";
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    } else {
+        form.contractType.value = '0';
+    }
+
+    // owner employer validation
+    var employerInfoPanel = $('#div-employer-info');
+    if(!employerInfoPanel.is(":hidden")) {
+        // owner employer name
+        var inputEmployerName = form.inputEmployerName;
+        message = null;
+        parent = $('#div-employer-name')[0];
+        if(!isNotEmpty(inputEmployerName)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // owner employer country
+        var countries = form.countries;
+        message = null;
+        parent = $('#div-countries')[0];
+        if(countries.value === '0') {
+            countries.className = 'styled-select select-validation-error';
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // owner employer address
+        message = null;
+        parent = $('#div-employer-address')[0];
+        if(!isNotEmpty(form.inputEmployerAddress)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // employer postal codes - select
+        var divPostalCodePanel = $('#div-select-postal-codes');
+        if(!divPostalCodePanel.is(":hidden")) {
+            message = null;
+            parent = $('#div-postal-codes')[0];
+            if(form.postalCodes.value === '0') {
+                $('button.btn.dropdown-toggle.btn-default')[0].className = "btn dropdown-toggle btn-default bootstrap-select-error"
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            } else {
+                form.postalCode.value = form.postalCodes.value;
+                var text = form.postalCodes[form.postalCodes.selectedIndex].text;
+                form.employerCity.value = getEmployerCity(text);
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+        }
+        // employer postal code - manually input
+        var manualPostalCodePanel = $('#div-input-postal-code');
+        if(!manualPostalCodePanel.is(":hidden")) {
+            message = null;
+            parent = manualPostalCodePanel[0];
+            if(!isNotEmpty(form.inputPostalCode) || !isNotEmpty(form.inputEmployerCity)) {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            } else {
+                form.postalCode.value = form.inputPostalCode.value;
+                form.employerCity.value = form.inputEmployerCity.value;
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+        }
+        // owner employer phone
+        message = null;
+        var employerPhone = form.employerPhone;
+        var employerCellPrefix = form.employerCellPrefix;
+        parent = $('#div-employer-phone')[0];
+        form.inputEmployerCellPrefix.value = employerCellPrefix.value;
+        if(!isNotEmpty(employerPhone)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+           var err = validateIkeaPhone(employerCellPrefix.value, employerPhone.value);
+            if (err) {
+                message = getTranslation(err);
+                employerPhone.className = 'form-control form-validation-error';
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    }
+
+    // PARTNER PROFESSIONAL INFORMATION
+    var partnerInfoPanel = $('#div-partner-info');
+    if(!partnerInfoPanel.is(":hidden")) {
+        // validate partner professional situation
+        message = null;
+        var situationProfPartner = form.situationProfPartner;
+        parent = $('#div-partner-professional-status')[0];
+        if(situationProfPartner.value === "0") {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+            situationProfPartner.className = 'styled-select select-validation-error';
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // partner from year
+        message = null;
+        parent = $('#div-customer-partner-job-year')[0];
+        if(!isNotEmpty(form.inputFromPartnerYear)) {
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        } else {
+             errMessage = validateYear(form.inputFromPartnerYear);
+            if(errMessage) {
+                form.inputFromPartnerYear.className = 'form-validation-error';
+                message = getTranslation(errMessage);
+            }
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        // partner from month
+        var customerPartnerMonthPanel = $('#div-customer-partner-job-month');
+        if (!customerPartnerMonthPanel.is(":hidden")) {
+            message = null;
+            parent = customerPartnerMonthPanel[0];
+            if(form.inputPartnerFromMonth.value === "0") {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            } else {
+                errMessage = checkMonth(form.inputPartnerFromMonth, form.inputFromPartnerYear.value);
+                if(errMessage) {
+                    message = getTranslation(errMessage);
+                }
+            }
+            if(message) {
+                form.inputPartnerFromMonth.className = "styled-select select-validation-error";
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+        }
+        // partner contract type
+        var customerPartnerContractType = $('#div-partner-contract-type');
+        if(!customerPartnerContractType.is(":hidden")) {
+            message = null;
+            parent = customerPartnerContractType[0];
+            var partnerContractType = form.partnerContractType;
+            if(partnerContractType.value === '0') {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            }
+            if(message) {
+                partnerContractType.className = "styled-select select-validation-error";
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+        } else {
+            form.partnerContractType.value = '0';
+        }
+
+        // PARTNER EMPLOYER INFORMATION
+        var partnerEmployerInfoPanel = $('#partner-employer-info');
+        if(!partnerEmployerInfoPanel.is(":hidden")) {
+            // partner employer name
+            var inputPartnerEmployerName = form.inputPartnerEmployerName;
+            message = null;
+            parent = $('#div-partner-employer-name')[0];
+            if(!isNotEmpty(inputPartnerEmployerName)) {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+            // partner employer country
+            var partnerCountries = form.partnerCountries;
+            message = null;
+            parent = $('#div-partner-countries')[0];
+            if(partnerCountries.value === '0') {
+                partnerCountries.className = 'styled-select select-validation-error';
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+            // pertner employer address:
+            message = null;
+            parent = $('#div-partner-employer-address')[0];
+            if(!isNotEmpty(form.inputPartnerEmployerAddress)) {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+            // partner employer postal code
+            var divPartnerPostalCodes = $('#div-select-partner-postal-codes');
+            if(!divPartnerPostalCodes.is(":hidden")) {
+                message = null;
+                parent = $('#div-partner-postal-codes')[0];
+                if(form.partnerPostalCodes.value === '0') {
+                    $('button.btn.dropdown-toggle.btn-default')[1].className = "btn dropdown-toggle btn-default bootstrap-select-error"
+                    message = getTranslation('message.validation.ikea.family.card.not.empty');
+                } else {
+                    form.partnerPostalCode.value = form.partnerPostalCodes.value;
+                    var allCode = form.partnerPostalCodes[form.partnerPostalCodes.selectedIndex].text;
+                    form.partnerEmployerCity.value = getEmployerCity(allCode);
+                }
+                if(message) {
+                    errorMessages.push(message);
+                    show_error_message(parent, message);
+                }
+            }
+            // partner employer postal code - manual input
+            var manualPartnerPostalCodePanel = $('#div-input-partner-postal-code');
+            if(!manualPartnerPostalCodePanel.is(":hidden")) {
+                message = null;
+                parent = manualPartnerPostalCodePanel[0];
+                if(!isNotEmpty(form.inputPartnerPostalCode) || !isNotEmpty(form.inputPartnerEmployerCity)) {
+                    message = getTranslation('message.validation.ikea.family.card.not.empty');
+                } else {
+                    form.partnerPostalCode.value = form.inputPartnerPostalCode.value;
+                    form.partnerEmployerCity.value = form.inputPartnerEmployerCity.value;
+                }
+                if(message) {
+                    errorMessages.push(message);
+                    show_error_message(parent, message);
+                }
+
+            }
+            // partner - employer phone
+            message = null;
+            var employerPartnerPhone = form.employerPartnerPhone;
+            var employerPartnerCellPrefix = form.employerPartnerCellPrefix;
+            parent = $('#div-partner-employer-phone')[0];
+            form.inputPartnerEmployerCellPrefix.value = employerPartnerCellPrefix.value;
+            if(!isNotEmpty(employerPartnerPhone)) {
+                message = getTranslation('message.validation.ikea.family.card.not.empty');
+            } else {
+                err = validateIkeaPhone(employerPartnerCellPrefix.value, employerPartnerPhone.value);
+                if (err) {
+                    message = getTranslation(err);
+                    employerPartnerPhone.className = 'form-control form-validation-error';
+                }
+            }
+            if(message) {
+                errorMessages.push(message);
+                show_error_message(parent, message);
+            }
+        }
+    } else { // do we really need it ?
+        form.situationProfPartner.value = '';
+    }
+
+    return errorMessages.length === 0;
+}
+
+function validateFinancialDataForm(form) {
+    var errorMessages = [];
+    var message = null;
+
+    // check housing status
+    var checked = checkOneHousingStatusIsSelected();
+    var parent = $('#div-financial-status')[0];
+    if (!checked) {
+        $('span#ACCESSING_OWNERSHIP')[0].className = "checkmark big_checkmark select-validation-error";
+        $('span#OWNER')[0].className = "checkmark big_checkmark select-validation-error";
+        $('span#RENTING')[0].className = "checkmark big_checkmark select-validation-error";
+        $('span#HOUSED_BY_FAMILY')[0].className = "checkmark big_checkmark select-validation-error";
+        $('span#HOUSED_BY_EMPLOYER')[0].className = "checkmark big_checkmark select-validation-error";
+        $('span#OTHER')[0].className = "checkmark big_checkmark select-validation-error";
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+    // check other housing status
+    var divOtherFinancialStatus = $('#div-other-financial-status');
+    message = null;
+    if(!divOtherFinancialStatus.is(":hidden")) {
+        parent = divOtherFinancialStatus[0];
+        if(form.otherFinancialStatus.value === '0') {
+            form.otherFinancialStatus.className = 'styled-select select-validation-error';
+            message = getTranslation('message.validation.ikea.family.card.not.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    }
+
+    // check period start
+    message = null;
+    parent = $('#div-from-period')[0];
+    if(!isNotEmpty(form.inputPeriodStart)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        var errorMessage = checkFinancialYear(form.inputPeriodStart);
+        if(errorMessage) {
+            message = getTranslation(errorMessage);
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check bank acount
+    message = null;
+    parent = $('#div-customer-bank-account')[0];
+    if(!isNotEmpty(form.inputBankAccount)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        var countryCode = form.countryCode;
+        var inputBankAccount = form.inputBankAccount.value.replace(/-/g, "");
+        var err = validateBankAccount(countryCode.value, inputBankAccount);
+        if (err) {
+            form.inputBankAccount.className = 'form-control form-validation-error';
+            message = getTranslation(err);
+        } else {
+            form.iban.value = countryCode.value + inputBankAccount;
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check account opening period
+    message = null;
+    parent = $('#div-bank-account-open-period')[0];
+    if(!isNotEmpty(form.inputPeriodBankAccount)) {
+        message = getTranslation('message.validation.ikea.family.card.not.empty');
+    } else {
+        errorMessage = checkFinancialYear(form.inputPeriodBankAccount);
+        if(errorMessage) {
+            message = getTranslation(errorMessage);
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check NET income
+    message = null;
+    parent = $('#div-customer-monthly-revenue')[0];
+    if(!isNotEmpty(form.inputMonthlyRevenue)) {
+        message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+    } else {
+        if(!checkIfNotZero(form.inputMonthlyRevenue)) {
+            message = getTranslation('message.validation.ikea.customer.revenue.must.not.be.zero');
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check other revenues
+    message = null;
+    parent = $('#div-customer-monthly-other-revenue')[0];
+    if(!isNotEmpty(form.inputMonthlyOtherRevenue)) {
+        message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check alimony
+    message = null;
+    parent = $('#div-customer-monthly-charges-alimony')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesAlimony)) {
+        message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check family allowance
+    message = null;
+    parent = $('#div-customer-monthly-charges-family-allowance')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesFamilyAllowance)) {
+        message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    // check partner revenues
+    var partnerMonthlyRevenue = $('#div-partner-monthly-revenue');
+    if(!partnerMonthlyRevenue.is(":hidden")) {
+        message = null;
+        parent = $('#div-customer-partner-monthly-revenue')[0];
+        if(!isNotEmpty(form.inputMonthlyPartnerRevenue)) {
+            message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+        parent = $('#div-customer-partner-monthly-other-revenue')[0];
+        if(!isNotEmpty(form.inputMonthlyPartnerOtherRevenue)) {
+            message = getTranslation('message.validation.ikea.family.financial.revenues.empty');
+        }
+        if(message) {
+            errorMessages.push(message);
+            show_error_message(parent, message);
+        }
+    }
+
+    // check charges
+    var chargesArray = [];
+    message = null;
+    parent = $('#div-customer-monthly-charges-card-credit')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesCreditCard)) {
+        message = getTranslation('message.validation.ikea.family.financial.charges.empty');
+    } else {
+        chargesArray.push(parseInt(form.inputMonthlyChargesCreditCard.value, 10))
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+    //
+    message = null;
+    parent = $('#div-customer-monthly-charges-house-credit')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesCreditHouse)) {
+        message = getTranslation('message.validation.ikea.family.financial.charges.empty');
+    }  else {
+        chargesArray.push(parseInt(form.inputMonthlyChargesCreditHouse.value, 10));
+        if(checkHousingStatusIsAccessingOwnership() && !checkIfNotZero(form.inputMonthlyChargesCreditHouse)) {
+            message = getTranslation('message.dossier.details.customer.house.credit.incorrect');
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    //
+    message = null;
+    parent = $('#div-customer-monthly-charges-rent')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesRent)) {
+        message = getTranslation('message.validation.ikea.family.financial.charges.empty');
+    }  else {
+        if(checkHousingStatusIsRenting() && form.inputMonthlyChargesRent.value === "0") {
+            message = getTranslation('message.dossier.details.customer.house.rent.incorrect');
+        }
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    //
+    message = null;
+    parent = $('#div-customer-monthly-charges-car-credit')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesCarCredit)) {
+        message = getTranslation('message.validation.ikea.family.financial.charges.empty');
+    } else {
+        chargesArray.push(parseInt(form.inputMonthlyChargesCarCredit.value, 10))
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    //
+    message = null;
+    parent = $('#div-customer-monthly-charges-other-credit')[0];
+    if(!isNotEmpty(form.inputMonthlyChargesOtherCredit)) {
+        message = getTranslation('message.validation.ikea.family.financial.charges.empty');
+    } else {
+        chargesArray.push(parseInt(form.inputMonthlyChargesOtherCredit.value, 10))
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    message = null;
+    parent = $('#div-customer-monthly-charges')[0];
+    var nrOfCharges = parseInt(form.inputMonthlyCharges.value, 10);
+    form.inputMonthlyCharges.className = 'form-control';
+    if(!chargesAreCorrect(nrOfCharges, chargesArray)) {
+        form.inputMonthlyCharges.className = 'form-control form-validation-error';
+        message = getTranslation('message.dossier.details.customer.incorrect.charges');
+    }
+    if(message) {
+        errorMessages.push(message);
+        show_error_message(parent, message);
+    }
+
+    return errorMessages.length === 0;
+}
+
+function chargesAreCorrect(nrOfCharges, chargesArray) {
+    var count = 0;
+    $.each(chargesArray, function (index, charge) {
+        if (charge > 0) {
+            count ++;
+        }
+    });
+    return count <= nrOfCharges;
+}
+
+function showToastrMessage(message, type, args) {
+    if (args) {
+        args = typeof args === 'number' ? args.toString() : args;
+        args = typeof args === 'string' ? [args] : args;
+        for (var i = 0; i < args.length; i++) {
+            message = message.replace('{' + i + '}', args[i]);
+        }
+    }
+    toastr[type](message);
+    $('#toast-container .toast-' + type).show();
+}
+
+function validateErrorMessages(errorMessages) {
+    if(errorMessages.length !== 0) {
+        var errorMessagesTranslated = [];
+        for (var i = 0; i < errorMessages.length; i++) {
+            errorMessagesTranslated.push(getTranslation(errorMessages[i]));
+        }
+        if(errorMessagesTranslated.length > 0) {
+            for (var j = 0; j < errorMessagesTranslated.length; j++ ) {
+                showToastrMessage(errorMessagesTranslated[j], 'error');
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+function convertToYear(value) {
+    var birthdayYear;
+    if(value.length === 29) {
+        birthdayYear = value.substring(25, value.length);
+    } else {
+        birthdayYear = value.substring(24, value.length);
+    }
+    return birthdayYear;
+}
+
+function convertToMonth(value) {
+    var month = value.substring(4,7);
+    var birthdayMonth = months.filter(function(key) {return key.name === month});
+    return birthdayMonth[0].value;
+}
+
+function getEmployerCity(text) {
+    if(text) {
+        var n = text.indexOf('/');
+        return text.substr(n + 1).trim();
+    }
+    return '';
+}
