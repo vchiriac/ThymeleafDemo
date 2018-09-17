@@ -1,0 +1,21 @@
+$(document).ready(function () {
+    var table = $('#tt').DataTable({
+        searching: false,
+        paging: false,
+        info: false,
+        orderClasses: true
+    });
+});
+
+function postleadid(leadId) {DateFormat
+    var url = "/kiosk/ikea/hideLead/" + leadId;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            console.log(xhr.responseText);
+        }
+    };
+    xhr.send();
+
+}
