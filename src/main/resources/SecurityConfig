@@ -1,0 +1,88 @@
+import be.buyway.hydra.ikea.shopmanager.services.LeadUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.RememberMeAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    private final static String REMEMBER_ME_COOKIE = "session-rm";
+
+    @Autowired
+    CustomAuthenticationProvider customAuthenticationProvider;
+
+    @Value(value = "${rememberme.token}")
+    private String rememberMeToken;
+
+    @Autowired
+    private LeadUserDetailsService userDetailsService;
+
+    @Autowired
+    private HttpAuthenticationEntryPoint authenticationEntryPoint;
+
+    @Autowired
+    private RememberMeAuthenticationProvider rememberMeAuthenticationProvider;
+
+    @Override
+    protected void configure(final AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http.authorizeRequests()
+                .antMatchers("/css/**", "/js/**", "/images/**", "/fonts/**","/img/**", "/lead-list/**", "/library/**", "/bootstrap/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/lead-list").permitAll()
+                .antMatchers(HttpMethod.POST, "/hideLead").permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .formLogin().loginProcessingUrl("/login").defaultSuccessUrl("/shop-selection.html", true).permitAll()
+                .and().rememberMe().key(rememberMeToken).rememberMeServices(this.tokenBasedRememberMeService()).tokenValiditySeconds(Integer.MAX_VALUE).and()
+                .authenticationProvider(rememberMeAuthenticationProvider)
+                .sessionManagement()
+                .and().logout().invalidateHttpSession(false).deleteCookies("JSESSIONID").clearAuthentication(false);
+
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
+    }
+
+    @Bean
+    public RememberMeAuthenticationFilter rememberMeAuthenticationFilter() throws Exception {
+        return new RememberMeAuthenticationFilter(authenticationManager(), tokenBasedRememberMeService());
+    }
+
+    @Bean
+    public TokenBasedRememberMeServices tokenBasedRememberMeService() {
+        TokenBasedRememberMeServices service = new TokenBasedRememberMeServices(rememberMeToken, userDetailsService);
+        service.setAlwaysRemember(true);
+        service.setCookieName(REMEMBER_ME_COOKIE);
+        service.setTokenValiditySeconds(Integer.MAX_VALUE);
+
+        return service;
+    }
+
+    @Bean
+    public RememberMeAuthenticationProvider rememberMeAuthenticationProvider() {
+        return new RememberMeAuthenticationProvider(rememberMeToken);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+}
