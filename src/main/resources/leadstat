@@ -1,0 +1,73 @@
+import be.buyway.hydra.ikea.leadlist.dto.LeadDto;
+import be.buyway.hydra.ikea.leadlist.service.LeadService;
+import be.buyway.hydra.ikea.shopmanager.services.JWTVerifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+@Controller
+public class LeadListController {
+
+    private LeadService leadService;
+
+    private String retailerNumber;
+
+    private final JWTVerifier jwtVerifier;
+
+    @Value("${retailSolutionLink}")
+    private String retailSolutionLink;
+
+    public LeadListController(LeadService leadService, final JWTVerifier jwtVerifier) {
+        this.leadService = leadService;
+        this.jwtVerifier = jwtVerifier;
+    }
+
+    @ModelAttribute
+    public void getAllLeads(@CookieValue(value = "retailsolution_jwt",
+            defaultValue = "") String myCookie, @RequestParam(value = "retailerNumber", required = false) String retailerNumber, Model model) {
+        List<LeadDto> leads = this.leadService.retrieveAllIkeaCustomers(retailerNumber);
+        model.addAttribute("leads", leads);
+        model.addAttribute("retailerNumber", retailerNumber);
+    }
+
+    @ModelAttribute
+    public void provideLeadElementt(Model model){
+        model.addAttribute("leadElement", new LeadDto());
+    }
+
+    @GetMapping({"/lead-list"})
+    public String dossierListView(Model model, HttpServletResponse response, @CookieValue(value = "retailsolution_jwt",
+            defaultValue = "") String myCookie) {
+        if (this.jwtVerifier.verify("retailerNumber", myCookie)) {
+            response.addCookie(new Cookie("retailsolution_jwt", myCookie));
+            model.addAttribute("lead", new LeadDto());
+            model.addAttribute("retailSolutionLink", this.retailSolutionLink);
+
+            return "kiosk/lead-list";
+        } else return HttpStatus.BAD_REQUEST.toString();
+    }
+
+    @PostMapping("/hideLead/{leadId}")
+    public String hideLead(@PathVariable("leadId") Long leadId,  @CookieValue(value = "retailsolution_jwt") String myCookie) {
+        if (this.jwtVerifier.verify("retailerNumber", myCookie)) {
+            this.leadService.hideLead(leadId);
+            return "kiosk/lead-list";
+        } else {
+             return HttpStatus.BAD_REQUEST.toString();
+        }
+    }
+
+
+
+}
