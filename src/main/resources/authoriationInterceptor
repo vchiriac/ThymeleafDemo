@@ -1,0 +1,61 @@
+package be.buyway.hydra.ikea.shopmanager.configuration;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+
+@Component
+public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (logger.isDebugEnabled()) {
+            String header = "\r\n===============================" +
+                "\r\n== AUTHORIZATION INTERCEPTOR ==" +
+                "\r\n===============================";
+            logger.debug(header);
+        }
+        return handle(request, response, handler);
+    }
+
+    private boolean handle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        String bean = ((HandlerMethod) handler).getBean().getClass().getName();
+        Cookie[] cookies = request.getCookies();
+        Map<String, String> cookieMap = getCookies(cookies);
+        logDetails(bean, cookieMap);
+        return true;
+    }
+
+    private String getCookie(Cookie[] cookies, String cookieName) {
+        return Arrays.stream(cookies)
+            .filter(c -> c.getName().equals(cookieName))
+            .findFirst()
+            .map(Cookie::getValue)
+            .orElse(null);
+    }
+
+    private Map<String, String> getCookies(Cookie[] cookies) {
+        return Arrays.stream(cookies).collect(Collectors.toMap(Cookie::getName, Cookie::getValue));
+    }
+
+    private void logDetails(String object, Map<String, String> cookieMap) {
+        if (logger.isDebugEnabled()) {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("\r\n bean = ").append(object);
+            cookieMap.forEach((k, v) -> stringBuilder.append("\r\n ").append(k).append(" = ").append(v));
+            logger.info(stringBuilder.toString());
+        }
+    }
+}
