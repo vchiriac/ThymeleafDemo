@@ -1,0 +1,31 @@
+mport java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BinaryOperator;
+import java.util.function.Supplier;
+
+public class MyUtils {
+
+    public static void main(String[] args) {
+        // List<String> testUtilsList = Arrays.asList("one", "two", "three");
+        List<String> testUtilsList = Arrays.asList("one");
+        String result = getSingleResult(testUtilsList);
+        System.out.println(result);
+    }
+
+    public static <T> T getSingleResult(List<T> resultList) {
+        return resultList.stream().reduce(toOnlyElement(resultList)).orElse(null);
+    }
+
+    private static <T> BinaryOperator<T> toOnlyElement(List<T> resultList) {
+        return toOnlyElementThrowing(
+            () -> new IllegalStateException(MessageFormat.format("Expected one result, retrieved [{0}].", resultList.size())));
+    }
+
+    private static <T, E extends RuntimeException> BinaryOperator<T> toOnlyElementThrowing(Supplier<E> exception) {
+        return (element, otherElement) -> {
+            throw exception.get();
+        };
+    }
+
+}
